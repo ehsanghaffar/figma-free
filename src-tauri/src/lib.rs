@@ -1,12 +1,9 @@
 //! Figma Desktop Wrapper with Proxy Support
 //! A cross-platform desktop application that wraps Figma with built-in proxy capabilities
 
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tauri::{
-    Manager,
-    menu::{MenuBuilder, MenuItemBuilder},
-    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    Emitter, Manager, menu::{MenuBuilder, MenuItemBuilder}, tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}
 };
 
 pub mod proxy;
@@ -93,7 +90,7 @@ pub fn run() {
             let health_monitor = state.health_monitor.clone();
             tauri::async_runtime::spawn(async move {
                 health_monitor.start().await;
-                Arc::new(health_monitor).run_loop().await;
+                health_monitor.run_loop().await;
             });
             
             log::info!("Application setup complete");
@@ -115,6 +112,7 @@ pub fn run() {
             commands::get_app_version,
             commands::is_first_run,
             commands::complete_first_run,
+            commands::create_figma_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

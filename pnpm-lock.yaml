@@ -12,7 +12,7 @@ importers:
         specifier: ^2
         version: 2.10.1
       '@tauri-apps/plugin-http':
-        specifier: ^2
+        specifier: ~2
         version: 2.5.6
       '@tauri-apps/plugin-notification':
         specifier: ^2

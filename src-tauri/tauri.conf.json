@@ -15,15 +15,14 @@
       {
         "label": "main",
         "title": "Figma Desktop",
-        "width": 1400,
-        "height": 900,
-        "minWidth": 800,
-        "minHeight": 600,
-        "decorations": false,
+        "width": 600,
+        "height": 800,
+        "decorations": true,
         "transparent": false,
         "resizable": true,
         "fullscreen": false,
         "center": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         "visible": true,
         "focus": true
       }
@@ -33,21 +32,10 @@
       "iconAsTemplate": true
     },
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.figma.com https://www.figma.com; style-src 'self' 'unsafe-inline' https://*.figma.com; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src https://*.figma.com https://www.figma.com"
+      "csp": null
     }
   },
-  "plugins": {
-    "http": {
-      "enabled": true,
-      "scope": ["https://**", "http://**"]
-    },
-    "store": {
-      "enabled": true
-    },
-    "notification": {
-      "enabled": true
-    }
-  },
+  "plugins": {},
   "bundle": {
     "active": true,
     "targets": "all",

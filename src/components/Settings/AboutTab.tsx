@@ -8,7 +8,7 @@ export function AboutTab() {
     <div className="space-y-6">
       {/* App Info */}
       <div className="text-center py-6">
-        <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
+        <div className="w-16 h-16 mx-auto mb-4 bg-linear-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
           <span className="text-2xl font-bold text-white">F</span>
         </div>
         <h2 className="text-xl font-semibold text-neutral-200">Figma Desktop</h2>

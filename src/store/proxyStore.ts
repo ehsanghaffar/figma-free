@@ -27,7 +27,7 @@ interface ProxyStore {
   // Actions
   setConfig: (config: Partial<ProxyConfig>) => void;
   saveConfig: () => Promise<void>;
-  loadConfig: () => Promise<void>;
+  loadConfig: () => Promise<ProxyConfig | Error>;
   testConnection: () => Promise<ProxyTestResult>;
   toggleProxy: (enabled: boolean) => Promise<void>;
   refreshStatus: () => Promise<void>;
@@ -94,9 +94,11 @@ export const useProxyStore = create<ProxyStore>()(
         try {
           const config = await invoke<ProxyConfig>('get_proxy_config');
           set({ config });
+          return config
         } catch (err) {
-          const error = err instanceof Error ? err.message : String(err);
-          set({ error });
+          const errorObj = err instanceof Error ? err : new Error(String(err));
+          set({ error: errorObj.message });
+          return errorObj
         } finally {
           set({ isLoading: false });
         }
