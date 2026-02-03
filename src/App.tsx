@@ -1,50 +1,41 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { useEffect } from 'react';
+import { TitleBar } from './components/TitleBar';
+import { SettingsPanel } from './components/SettingsPanel';
+import { WebView } from './components/WebView';
+import { useKeyboardShortcuts, useSettingsListener } from './hooks/useProxy';
+import { useAppStore, useProxyStore } from './store/proxyStore';
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  // Initialize keyboard shortcuts
+  useKeyboardShortcuts();
+  
+  // Listen for settings open events from system tray
+  useSettingsListener();
+  
+  // Load app info and proxy config on mount
+  const loadAppInfo = useAppStore((state) => state.loadAppInfo);
+  const loadConfig = useProxyStore((state) => state.loadConfig);
+  const loadAdvancedSettings = useProxyStore((state) => state.loadAdvancedSettings);
+  
+  useEffect(() => {
+    loadAppInfo();
+    loadConfig();
+    loadAdvancedSettings();
+  }, [loadAppInfo, loadConfig, loadAdvancedSettings]);
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+    <div className="h-screen w-screen flex flex-col bg-neutral-950 overflow-hidden">
+      {/* Custom Title Bar */}
+      <TitleBar />
+      
+      {/* Main Content - Figma WebView */}
+      <main className="flex-1 relative overflow-hidden">
+        <WebView />
+      </main>
+      
+      {/* Settings Overlay */}
+      <SettingsPanel />
+    </div>
   );
 }
 
