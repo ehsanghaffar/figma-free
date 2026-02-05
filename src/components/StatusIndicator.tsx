@@ -1,4 +1,5 @@
 import { useConnectionStatus } from '../hooks/useProxy';
+import { Badge } from './ui/badge';
 import type { ConnectionStatus } from '../types/proxy';
 
 interface StatusIndicatorProps {
@@ -7,25 +8,21 @@ interface StatusIndicatorProps {
   showLatency?: boolean;
 }
 
-const statusConfig: Record<ConnectionStatus, { color: string; label: string; bgColor: string }> = {
+const statusConfig: Record<ConnectionStatus, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
   connected: {
-    color: 'bg-green-500',
-    bgColor: 'bg-green-500/20',
+    variant: 'default',
     label: 'Connected',
   },
   connecting: {
-    color: 'bg-yellow-500',
-    bgColor: 'bg-yellow-500/20',
+    variant: 'secondary',
     label: 'Connecting...',
   },
   disconnected: {
-    color: 'bg-neutral-500',
-    bgColor: 'bg-neutral-500/20',
+    variant: 'outline',
     label: 'Disconnected',
   },
   error: {
-    color: 'bg-red-500',
-    bgColor: 'bg-red-500/20',
+    variant: 'destructive',
     label: 'Error',
   },
 };
@@ -33,17 +30,14 @@ const statusConfig: Record<ConnectionStatus, { color: string; label: string; bgC
 const sizeConfig = {
   sm: {
     dot: 'w-2 h-2',
-    container: 'px-2 py-1',
     text: 'text-xs',
   },
   md: {
     dot: 'w-2.5 h-2.5',
-    container: 'px-3 py-1.5',
     text: 'text-sm',
   },
   lg: {
     dot: 'w-3 h-3',
-    container: 'px-4 py-2',
     text: 'text-base',
   },
 };
@@ -58,40 +52,25 @@ export function StatusIndicator({
   const sizes = sizeConfig[size];
 
   return (
-    <div className={`flex items-center gap-2 ${config.bgColor} rounded-full ${sizes.container}`}>
+    <Badge variant={config.variant} className="flex items-center gap-1.5">
       <div className="relative flex items-center justify-center">
-        <span className={`${sizes.dot} rounded-full ${config.color}`} />
+        <span className={`${sizes.dot} rounded-full bg-current`} />
         {status === 'connecting' && (
-          <span className={`absolute ${sizes.dot} rounded-full ${config.color} animate-ping`} />
+          <span className={`absolute ${sizes.dot} rounded-full bg-current animate-pulse`} />
         )}
       </div>
       
       {showLabel && (
-        <span className={`${sizes.text} text-neutral-300 font-medium`}>
+        <span className={sizes.text}>
           {config.label}
         </span>
       )}
       
       {showLatency && latency !== null && status === 'connected' && (
-        <span className={`${sizes.text} text-neutral-500`}>
+        <span className={`${sizes.text} opacity-75`}>
           {latency}ms
         </span>
       )}
-    </div>
-  );
-}
-
-// Compact version for title bar
-export function StatusDot() {
-  const { status } = useConnectionStatus();
-  const config = statusConfig[status];
-
-  return (
-    <div className="relative flex items-center justify-center" title={config.label}>
-      <span className={`w-2 h-2 rounded-full ${config.color}`} />
-      {status === 'connecting' && (
-        <span className={`absolute w-2 h-2 rounded-full ${config.color} animate-ping`} />
-      )}
-    </div>
+    </Badge>
   );
 }

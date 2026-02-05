@@ -1,5 +1,6 @@
 import { ExternalLink, Github, Heart } from 'lucide-react';
 import { useAppStore } from '../../store/proxyStore';
+import { Button } from '../ui/button';
 
 export function AboutTab() {
   const { appVersion } = useAppStore();
@@ -53,31 +54,41 @@ export function AboutTab() {
 
       {/* Links */}
       <div className="space-y-2">
-        <a
-          href="https://github.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-between p-3 bg-neutral-800/50 hover:bg-neutral-800 rounded-lg transition-colors group"
+        <Button
+          variant="outline"
+          className="w-full flex items-center justify-between"
+          asChild
         >
-          <div className="flex items-center gap-3">
-            <Github className="w-5 h-5 text-neutral-400" />
-            <span className="text-sm text-neutral-300">View on GitHub</span>
-          </div>
-          <ExternalLink className="w-4 h-4 text-neutral-600 group-hover:text-neutral-400 transition-colors" />
-        </a>
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <div className="flex items-center gap-3">
+              <Github className="w-5 h-5" />
+              <span>View on GitHub</span>
+            </div>
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        </Button>
 
-        <a
-          href="https://www.figma.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-between p-3 bg-neutral-800/50 hover:bg-neutral-800 rounded-lg transition-colors group"
+        <Button
+          variant="outline"
+          className="w-full flex items-center justify-between"
+          asChild
         >
-          <div className="flex items-center gap-3">
-            <span className="text-neutral-400 text-lg">F</span>
-            <span className="text-sm text-neutral-300">Visit Figma</span>
-          </div>
-          <ExternalLink className="w-4 h-4 text-neutral-600 group-hover:text-neutral-400 transition-colors" />
-        </a>
+          <a
+            href="https://www.figma.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-lg">F</span>
+              <span>Visit Figma</span>
+            </div>
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        </Button>
       </div>
 
       {/* Legal */}

@@ -2,6 +2,7 @@ import { Minus, Square, X, Settings } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useSettingsStore } from '../store/proxyStore';
 import { StatusIndicator } from './StatusIndicator';
+import { Button } from './ui/button';
 
 export function TitleBar() {
   const settingsStore = useSettingsStore();
@@ -43,40 +44,48 @@ export function TitleBar() {
       </div>
 
       {/* Right section - Window controls */}
-      <div className="flex items-center">
-        <button
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => settingsStore.open()}
-          className="p-2 hover:bg-neutral-800 rounded transition-colors"
           title="Settings (Cmd+,)"
+          className="h-8 w-8 p-0"
         >
-          <Settings className="w-4 h-4 text-neutral-400" />
-        </button>
+          <Settings className="w-4 h-4" />
+        </Button>
         
         <div className="w-px h-4 bg-neutral-700 mx-1" />
         
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={handleMinimize}
-          className="p-2 hover:bg-neutral-800 rounded transition-colors"
           title="Minimize"
+          className="h-8 w-8 p-0"
         >
-          <Minus className="w-4 h-4 text-neutral-400" />
-        </button>
+          <Minus className="w-4 h-4" />
+        </Button>
         
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={handleMaximize}
-          className="p-2 hover:bg-neutral-800 rounded transition-colors"
           title="Maximize"
+          className="h-8 w-8 p-0"
         >
-          <Square className="w-3.5 h-3.5 text-neutral-400" />
-        </button>
+          <Square className="w-3.5 h-3.5" />
+        </Button>
         
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={handleClose}
-          className="p-2 hover:bg-red-600 rounded transition-colors group"
           title="Close to Tray"
+          className="h-8 w-8 p-0 hover:bg-red-600 hover:text-white"
         >
-          <X className="w-4 h-4 text-neutral-400 group-hover:text-white" />
-        </button>
+          <X className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   );

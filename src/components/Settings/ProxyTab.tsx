@@ -6,7 +6,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group";
+import { InputGroup, InputGroupInput } from "../ui/input-group";
 
 interface FormErrors {
   host?: string;
