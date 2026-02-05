@@ -5,7 +5,6 @@ import type {
   ProxyConfig,
   ProxyStatus,
   ProxyTestResult,
-  ProxyPreset,
   AdvancedSettings,
 } from '../types/proxy';
 
@@ -13,7 +12,6 @@ interface ProxyStore {
   // Proxy state
   config: ProxyConfig;
   status: ProxyStatus | null;
-  presets: ProxyPreset[];
   
   // UI state
   isLoading: boolean;
@@ -31,7 +29,6 @@ interface ProxyStore {
   testConnection: () => Promise<ProxyTestResult>;
   toggleProxy: (enabled: boolean) => Promise<void>;
   refreshStatus: () => Promise<void>;
-  loadPresets: () => Promise<void>;
   setAdvancedSettings: (settings: Partial<AdvancedSettings>) => void;
   saveAdvancedSettings: () => Promise<void>;
   loadAdvancedSettings: () => Promise<void>;
@@ -51,7 +48,6 @@ export const useProxyStore = create<ProxyStore>()(
         autoConnect: false,
       },
       status: null,
-      presets: [],
       isLoading: false,
       isTesting: false,
       testResult: null,
@@ -151,15 +147,6 @@ export const useProxyStore = create<ProxyStore>()(
           set({ status });
         } catch (err) {
           console.error('Failed to refresh status:', err);
-        }
-      },
-
-      loadPresets: async () => {
-        try {
-          const presets = await invoke<ProxyPreset[]>('get_proxy_presets');
-          set({ presets });
-        } catch (err) {
-          console.error('Failed to load presets:', err);
         }
       },
 

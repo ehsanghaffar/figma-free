@@ -43,15 +43,13 @@ function App() {
   }, [loadAppInfo, loadConfig, loadAdvancedSettings]);
   
   return (
-    <div className="h-screen w-screen flex flex-col bg-neutral-950 overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-neutral-900 overflow-hidden">
       {/* Custom Title Bar */}
       <TitleBar />
       
       {/* Main Content: Proxy configuration and action */}
-      <div className="flex-1 overflow-auto p-6 bg-neutral-950">
-        {/* Proxy configuration inline on first webview */}
-        <div className="max-w-2xl mx-auto bg-neutral-900 border border-neutral-800 rounded-xl p-6">
-          <h2 className="text-neutral-200 text-lg font-semibold mb-4">Proxy Settings</h2>
+        <div className="max-w-2xl mx-auto  p-8">
+          <h2 className="text-neutral-200 text-lg font-semibold mb-4">Figma Settings</h2>
           <ProxyTab />
 
           {/* Open Figma action */}
@@ -67,7 +65,6 @@ function App() {
             </button>
           </div>
         </div>
-      </div>
       
       {/* Settings Overlay */}
       <SettingsPanel />

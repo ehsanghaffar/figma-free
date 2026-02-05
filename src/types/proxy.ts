@@ -28,24 +28,6 @@ export interface ProxyStatus {
   lastUpdated: string;
 }
 
-export interface ProxyPreset {
-  name: string;
-  proxyType: ProxyType;
-  host: string;
-  port: number;
-  requiresAuth: boolean;
-  location?: string;
-}
-
-export interface ProxyState {
-  config: ProxyConfig;
-  status: ProxyStatus;
-  presets: ProxyPreset[];
-  isLoading: boolean;
-  isTesting: boolean;
-  testResult: ProxyTestResult | null;
-}
-
 // Advanced settings
 export interface AdvancedSettings {
   customDns: string | null;

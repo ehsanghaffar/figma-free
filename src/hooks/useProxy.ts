@@ -12,7 +12,6 @@ export function useProxy() {
   // Initialize on mount
   useEffect(() => {
     store.loadConfig();
-    store.loadPresets();
     store.refreshStatus();
     
     // Set up periodic status refresh
@@ -53,7 +52,6 @@ export function useProxy() {
   return {
     config: store.config,
     status: store.status,
-    presets: store.presets,
     isLoading: store.isLoading,
     isTesting: store.isTesting,
     testResult: store.testResult,
@@ -73,19 +71,19 @@ export function useProxy() {
  * Hook for connection status display
  */
 export function useConnectionStatus(): ConnectionInfo {
-  const { status, config, testResult } = useProxyStore();
+  const { status, config, testResult, isTesting } = useProxyStore();
   
   // Determine connection status
   let connectionStatus: ConnectionStatus = 'disconnected';
   
-  if (!config.enabled) {
+  if (isTesting) {
+    connectionStatus = 'connecting';
+  } else if (!config.enabled) {
     connectionStatus = 'disconnected';
   } else if (status?.isConnected) {
     connectionStatus = 'connected';
   } else if (status?.lastError) {
     connectionStatus = 'error';
-  } else {
-    connectionStatus = 'connecting';
   }
   
   return {

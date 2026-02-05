@@ -33,7 +33,7 @@
       "identifier": "opener:allow-open-url",
       "allow": [
         {
-          "url": "https://www.figma.com/*"
+          "url": "https://www.figma.com"
         },
         {
           "url": "https://www.figma.com/design/*"

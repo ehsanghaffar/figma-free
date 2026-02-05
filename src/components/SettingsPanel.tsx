@@ -1,6 +1,6 @@
-import { X, Wifi, Settings, Info } from 'lucide-react';
+import { X, Settings, Info } from 'lucide-react';
 import { useSettingsStore } from '../store/proxyStore';
-import { ProxyTab, AdvancedTab, AboutTab } from './Settings';
+import { AdvancedTab, AboutTab } from './Settings';
 
 const tabs = [
   // { id: 'proxy' as const, label: 'Proxy', icon: Wifi },

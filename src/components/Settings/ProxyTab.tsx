@@ -4,6 +4,11 @@ import { useProxy } from '../../hooks/useProxy';
 import type { ProxyType, ProxyConfig } from '../../types/proxy';
 import { invoke } from '@tauri-apps/api/core';
 
+interface FormErrors {
+  host?: string;
+  port?: string;
+}
+
 export function ProxyTab() {
   const {
     config,
@@ -17,17 +22,32 @@ export function ProxyTab() {
     isLoading,
     error,
     clearError,
-    // presets,
   } = useProxy();
 
   const [localConfig, setLocalConfig] = useState<ProxyConfig>(config);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     setLocalConfig(config);
   }, [config]);
 
+  const validate = (values: ProxyConfig): FormErrors => {
+    const newErrors: FormErrors = {};
+    if (!values.host) {
+      newErrors.host = 'Host is required';
+    }
+    if (!values.port) {
+      newErrors.port = 'Port is required';
+    } else if (values.port < 1 || values.port > 65535) {
+      newErrors.port = 'Port must be between 1 and 65535';
+    }
+    return newErrors;
+  };
+
   const handleChange = (field: keyof ProxyConfig, value: string | number | boolean) => {
-    setLocalConfig((prev: ProxyConfig) => ({ ...prev, [field]: value }));
+    const newConfig = { ...localConfig, [field]: value };
+    setLocalConfig(newConfig);
+    setErrors(validate(newConfig));
   };
 
   const normalizeConfig = (input: ProxyConfig): ProxyConfig => ({
@@ -37,6 +57,11 @@ export function ProxyTab() {
   });
 
   const handleSave = async () => {
+    const formErrors = validate(localConfig);
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
+      return;
+    }
     // Apply config and attempt connection if enabled
     const sanitizedConfig = normalizeConfig(localConfig);
     setConfig(sanitizedConfig);
@@ -64,23 +89,15 @@ export function ProxyTab() {
   };
 
   const handleTest = async () => {
+    const formErrors = validate(localConfig);
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
+      return;
+    }
     const sanitizedConfig = normalizeConfig(localConfig);
     setConfig(sanitizedConfig);
     await testConnection();
   };
-
-  // const handlePresetSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-  //   const selectedName = e.target.value;
-  //   const preset = presets.find((p: { name: string }) => p.name === selectedName);
-  //   if (preset) {
-  //     setLocalConfig((prev: ProxyConfig) => ({
-  //       ...prev,
-  //       type: preset.proxyType,
-  //       host: preset.host,
-  //       port: preset.port,
-  //     }));
-  //   }
-  // };
 
   return (
     <div className="space-y-6">
@@ -100,26 +117,6 @@ export function ProxyTab() {
           <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
         </label>
       </div>
-
-      {/* Preset Selector */}
-      {/* {presets.length > 0 && (
-        <div>
-          <label className="block text-sm font-medium text-neutral-300 mb-2">
-            Preset Servers
-          </label>
-          <select
-            onChange={handlePresetSelect}
-            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select a preset...</option>
-            {presets.map((preset: { name: string; location?: string }) => (
-              <option key={preset.name} value={preset.name}>
-                {preset.name} {preset.location && `(${preset.location})`}
-              </option>
-            ))}
-          </select>
-        </div>
-      )} */}
 
       {/* Proxy Type */}
       <div>
@@ -148,8 +145,9 @@ export function ProxyTab() {
             value={localConfig.host}
             onChange={(e) => handleChange('host', e.target.value)}
             placeholder="proxy.example.com"
-            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-3 py-2 bg-neutral-800 border rounded-lg text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:ring-2 ${errors.host ? 'border-red-500 focus:ring-red-500' : 'border-neutral-700 focus:ring-blue-500'}`}
           />
+          {errors.host && <p className="text-xs text-red-400 mt-1">{errors.host}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-neutral-300 mb-2">
@@ -160,8 +158,9 @@ export function ProxyTab() {
             value={localConfig.port}
             onChange={(e) => handleChange('port', parseInt(e.target.value) || 0)}
             placeholder="1080"
-            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-3 py-2 bg-neutral-800 border rounded-lg text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:ring-2 ${errors.port ? 'border-red-500 focus:ring-red-500' : 'border-neutral-700 focus:ring-blue-500'}`}
           />
+          {errors.port && <p className="text-xs text-red-400 mt-1">{errors.port}</p>}
         </div>
       </div>
 
@@ -251,7 +250,7 @@ export function ProxyTab() {
       <div className="flex gap-3 pt-4">
         <button
           onClick={handleTest}
-          disabled={isTesting || !localConfig.host}
+          disabled={isTesting || !localConfig.host || Object.keys(errors).length > 0}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium text-neutral-200 transition-colors"
         >
           {isTesting ? (
@@ -263,7 +262,7 @@ export function ProxyTab() {
         </button>
         <button
           onClick={handleSave}
-          disabled={isLoading || !localConfig.host}
+          disabled={isLoading || !localConfig.host || Object.keys(errors).length > 0}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium text-white transition-colors"
         >
           {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
