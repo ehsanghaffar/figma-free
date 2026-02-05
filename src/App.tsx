@@ -6,6 +6,7 @@ import { useKeyboardShortcuts, useSettingsListener, useConnectionStatus } from '
 import { useAppStore, useProxyStore } from './store/proxyStore';
 import { invoke } from '@tauri-apps/api/core';
 import { Figma } from 'lucide-react';
+import { Button } from './components/ui/button';
 
 function App() {
 
@@ -43,26 +44,26 @@ function App() {
   }, [loadAppInfo, loadConfig, loadAdvancedSettings]);
   
   return (
-    <div className="h-screen w-screen flex flex-col bg-neutral-900 overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
       {/* Custom Title Bar */}
       <TitleBar />
       
       {/* Main Content: Proxy configuration and action */}
         <div className="max-w-2xl mx-auto  p-8">
-          <h2 className="text-neutral-200 text-lg font-semibold mb-4">Figma Settings</h2>
+          <h2 className=" text-lg font-semibold mb-4">Figma Settings</h2>
           <ProxyTab />
 
           {/* Open Figma action */}
           <div className="mt-6 flex items-center justify-center gap-3">
-            <button
+            <Button
+              size="lg"
               onClick={launchFigma}
               disabled={status !== 'connected'}
-              className="flex gap-3 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
               title={status !== 'connected' ? 'Connect proxy successfully to enable' : 'Open Figma'}
             >
               <Figma />
               Open Figma
-            </button>
+            </Button>
           </div>
         </div>
       

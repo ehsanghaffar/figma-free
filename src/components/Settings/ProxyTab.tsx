@@ -1,8 +1,12 @@
-import { useState, useEffect } from 'react';
-import { Loader2, CheckCircle, XCircle, Play } from 'lucide-react';
-import { useProxy } from '../../hooks/useProxy';
-import type { ProxyType, ProxyConfig } from '../../types/proxy';
-import { invoke } from '@tauri-apps/api/core';
+import { useState, useEffect } from "react";
+import { Loader2, CheckCircle, XCircle, Play } from "lucide-react";
+import { useProxy } from "../../hooks/useProxy";
+import type { ProxyType, ProxyConfig } from "../../types/proxy";
+import { invoke } from "@tauri-apps/api/core";
+import { Switch } from "../ui/switch";
+import { Label } from "../ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group";
 
 interface FormErrors {
   host?: string;
@@ -34,12 +38,12 @@ export function ProxyTab() {
   const validate = (values: ProxyConfig): FormErrors => {
     const newErrors: FormErrors = {};
     if (!values.host) {
-      newErrors.host = 'Host is required';
+      newErrors.host = "Host is required";
     }
     if (!values.port) {
-      newErrors.port = 'Port is required';
+      newErrors.port = "Port is required";
     } else if (values.port < 1 || values.port > 65535) {
-      newErrors.port = 'Port must be between 1 and 65535';
+      newErrors.port = "Port must be between 1 and 65535";
     }
     return newErrors;
   };
@@ -73,7 +77,7 @@ export function ProxyTab() {
         // Ensure proxy is toggled on and status is refreshed immediately
         await toggleProxy(true);
         try {
-          await invoke('trigger_health_check');
+          await invoke("trigger_health_check");
         } catch (e) {
           // ignore failures, background monitor will update eventually
         }
@@ -104,62 +108,57 @@ export function ProxyTab() {
       {/* Enable Toggle */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium text-neutral-200">Enable Proxy</h3>
-          <p className="text-xs text-neutral-500">Route traffic through proxy server</p>
+          <h3 className="text-sm font-medium">Enable Proxy</h3>
+          <p className="text-xs text-muted-foreground">Route traffic through proxy server</p>
         </div>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            checked={localConfig.enabled}
-            onChange={(e) => handleChange('enabled', e.target.checked)}
-            className="sr-only peer"
-          />
-          <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-        </label>
+        <Switch checked={localConfig.enabled} onCheckedChange={(checked) => handleChange("enabled", checked)} />
       </div>
 
       {/* Proxy Type */}
-      <div>
-        <label className="block text-sm font-medium text-neutral-300 mb-2">
-          Proxy Type
-        </label>
-        <select
-          value={localConfig.type}
-          onChange={(e) => handleChange('type', e.target.value as ProxyType)}
-          className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="socks5">SOCKS5</option>
-          <option value="http">HTTP</option>
-          <option value="https">HTTPS</option>
-        </select>
+      <div className="grid gap-2">
+        <Label htmlFor="proxy-type">Proxy Type</Label>
+        <Select value={localConfig.type} onValueChange={(value) => handleChange("type", value as ProxyType)}>
+          <SelectTrigger className="w-full" id="proxy-type">
+            <SelectValue placeholder="Select proxy type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="socks5">SOCKS5</SelectItem>
+            <SelectItem value="http">HTTP</SelectItem>
+            <SelectItem value="https">HTTPS</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Host & Port */}
       <div className="grid grid-cols-3 gap-4">
         <div className="col-span-2">
-          <label className="block text-sm font-medium text-neutral-300 mb-2">
-            Host
-          </label>
-          <input
-            type="text"
-            value={localConfig.host}
-            onChange={(e) => handleChange('host', e.target.value)}
-            placeholder="proxy.example.com"
-            className={`w-full px-3 py-2 bg-neutral-800 border rounded-lg text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:ring-2 ${errors.host ? 'border-red-500 focus:ring-red-500' : 'border-neutral-700 focus:ring-blue-500'}`}
-          />
+          <Label htmlFor="proxy-host">Host</Label>
+          <InputGroup>
+            <InputGroupInput
+              id="proxy-host"
+              type="text"
+              value={localConfig.host}
+              onChange={(e) => handleChange("host", e.target.value)}
+              placeholder="proxy.example.com"
+              aria-invalid={!!errors.host}
+              className={errors.host ? "border-red-500 focus:ring-red-500" : ""}
+            />
+          </InputGroup>
           {errors.host && <p className="text-xs text-red-400 mt-1">{errors.host}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-neutral-300 mb-2">
-            Port
-          </label>
-          <input
-            type="number"
-            value={localConfig.port}
-            onChange={(e) => handleChange('port', parseInt(e.target.value) || 0)}
-            placeholder="1080"
-            className={`w-full px-3 py-2 bg-neutral-800 border rounded-lg text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:ring-2 ${errors.port ? 'border-red-500 focus:ring-red-500' : 'border-neutral-700 focus:ring-blue-500'}`}
-          />
+          <Label htmlFor="proxy-port">Port</Label>
+          <InputGroup>
+            <InputGroupInput
+              id="proxy-port"
+              type="number"
+              value={localConfig.port}
+              onChange={(e) => handleChange("port", parseInt(e.target.value) || 0)}
+              placeholder="1080"
+              aria-invalid={!!errors.port}
+              className={errors.port ? "border-red-500 focus:ring-red-500" : ""}
+            />
+          </InputGroup>
           {errors.port && <p className="text-xs text-red-400 mt-1">{errors.port}</p>}
         </div>
       </div>
@@ -169,24 +168,28 @@ export function ProxyTab() {
         <h4 className="text-sm font-medium text-neutral-300">Authentication (Optional)</h4>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-neutral-500 mb-1">Username</label>
-            <input
-              type="text"
-              value={localConfig.username || ''}
-              onChange={(e) => handleChange('username', e.target.value)}
-              placeholder="username"
-              className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <Label htmlFor="proxy-username">Username</Label>
+            <InputGroup>
+              <InputGroupInput
+                id="proxy-username"
+                type="text"
+                value={localConfig.username || ""}
+                onChange={(e) => handleChange("username", e.target.value)}
+                placeholder="username"
+              />
+            </InputGroup>
           </div>
           <div>
-            <label className="block text-xs text-neutral-500 mb-1">Password</label>
-            <input
-              type="password"
-              value={localConfig.password || ''}
-              onChange={(e) => handleChange('password', e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <Label htmlFor="proxy-password">Password</Label>
+            <InputGroup>
+              <InputGroupInput
+                id="proxy-password"
+                type="password"
+                value={localConfig.password || ""}
+                onChange={(e) => handleChange("password", e.target.value)}
+                placeholder="••••••••"
+              />
+            </InputGroup>
           </div>
         </div>
       </div>
@@ -201,7 +204,7 @@ export function ProxyTab() {
           <input
             type="checkbox"
             checked={localConfig.autoConnect}
-            onChange={(e) => handleChange('autoConnect', e.target.checked)}
+            onChange={(e) => handleChange("autoConnect", e.target.checked)}
             className="sr-only peer"
           />
           <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -210,15 +213,17 @@ export function ProxyTab() {
 
       {/* Test Result */}
       {testResult && (
-        <div className={`p-4 rounded-lg ${testResult.success ? 'bg-green-900/20 border border-green-800' : 'bg-red-900/20 border border-red-800'}`}>
+        <div
+          className={`p-4 rounded-lg ${testResult.success ? "bg-green-900/20 border border-green-800" : "bg-red-900/20 border border-red-800"}`}
+        >
           <div className="flex items-center gap-2">
             {testResult.success ? (
               <CheckCircle className="w-5 h-5 text-green-500" />
             ) : (
               <XCircle className="w-5 h-5 text-red-500" />
             )}
-            <span className={`text-sm font-medium ${testResult.success ? 'text-green-400' : 'text-red-400'}`}>
-              {testResult.success ? 'Connection Successful' : 'Connection Failed'}
+            <span className={`text-sm font-medium ${testResult.success ? "text-green-400" : "text-red-400"}`}>
+              {testResult.success ? "Connection Successful" : "Connection Failed"}
             </span>
           </div>
           {testResult.success && testResult.latencyMs && (
@@ -227,9 +232,7 @@ export function ProxyTab() {
               {testResult.externalIp && ` • IP: ${testResult.externalIp}`}
             </p>
           )}
-          {testResult.error && (
-            <p className="text-xs text-red-400 mt-2">{testResult.error}</p>
-          )}
+          {testResult.error && <p className="text-xs text-red-400 mt-2">{testResult.error}</p>}
         </div>
       )}
 
@@ -237,10 +240,7 @@ export function ProxyTab() {
       {error && (
         <div className="p-4 bg-red-900/20 border border-red-800 rounded-lg">
           <p className="text-sm text-red-400">{error}</p>
-          <button
-            onClick={clearError}
-            className="text-xs text-red-500 hover:text-red-400 mt-1"
-          >
+          <button onClick={clearError} className="text-xs text-red-500 hover:text-red-400 mt-1">
             Dismiss
           </button>
         </div>
@@ -253,11 +253,7 @@ export function ProxyTab() {
           disabled={isTesting || !localConfig.host || Object.keys(errors).length > 0}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium text-neutral-200 transition-colors"
         >
-          {isTesting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Play className="w-4 h-4" />
-          )}
+          {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
           Test Connection
         </button>
         <button
