@@ -2,11 +2,12 @@
 //! Monitors connection status and performs periodic health checks
 
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use tokio::time::interval;
 
 use crate::proxy::manager::SharedProxyManager;
+use crate::proxy::config::ProxyTestResult;
 
 /// Health check configuration
 #[derive(Debug, Clone)]
@@ -19,6 +20,8 @@ pub struct HealthCheckConfig {
     pub failure_threshold: u32,
     /// URL to use for health checks
     pub check_url: String,
+    /// Optional token to include in the `X-Figma-Token` header for health checks
+    pub figma_token: Option<String>,
 }
 
 impl Default for HealthCheckConfig {
@@ -27,7 +30,9 @@ impl Default for HealthCheckConfig {
             interval_secs: 30,
             timeout_secs: 10,
             failure_threshold: 3,
-            check_url: "https://www.figma.com/api/community/v1/ping".to_string(),
+            check_url: "https://www.api.figma.com/v1/me".to_string(),
+            // default token (can be overridden by passing a config)
+            figma_token: Some("figd_IdyLvLfEItlyfcoNibAFuB5hOYyv106KvAuxlcXK".to_string()),
         }
     }
 }
@@ -79,7 +84,37 @@ impl HealthMonitor {
         }
 
         let config = proxy_manager.get_config().await;
-        let result = proxy_manager.test_connection(&config).await;
+
+        // Build a ProxyTestResult by performing a GET to the configured check_url
+        let result: ProxyTestResult = {
+            // Validate config first
+            if let Err(e) = config.validate() {
+                ProxyTestResult::failure(e)
+            } else {
+                let start = Instant::now();
+
+                // Prefer sending the X-Figma-Token header when configured, otherwise do a plain request
+                let response_result = if let Some(token) = &self.config.figma_token {
+                    proxy_manager
+                        .request_with_header(&self.config.check_url, "X-Figma-Token", token)
+                        .await
+                } else {
+                    proxy_manager.request(&self.config.check_url).await
+                };
+
+                match response_result {
+                    Ok(response) => {
+                        let latency = start.elapsed().as_millis() as u64;
+                        if response.status().is_success() {
+                            ProxyTestResult::success(latency, None)
+                        } else {
+                            ProxyTestResult::failure(format!("HTTP error: {}", response.status()))
+                        }
+                    }
+                    Err(e) => ProxyTestResult::failure(format!("Connection error: {}", e)),
+                }
+            }
+        };
 
         if result.success {
             *self.consecutive_failures.write().await = 0;

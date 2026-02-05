@@ -210,6 +210,38 @@ impl ProxyManager {
         }
     }
 
+    /// Make a GET request with a single header through the proxy (or directly when proxy disabled).
+    /// `header_name` and `header_value` are simple string values and will be added to the request.
+    pub async fn request_with_header(
+        &self,
+        url: &str,
+        header_name: &str,
+        header_value: &str,
+    ) -> Result<reqwest::Response, ProxyError> {
+        let config = self.config.read().await;
+
+        if config.enabled {
+            let client = self.client.read().await;
+            if let Some(ref client) = *client {
+                client
+                    .get(url)
+                    .header(header_name, header_value)
+                    .send()
+                    .await
+                    .map_err(ProxyError::from)
+            } else {
+                Err(ProxyError::NotConfigured)
+            }
+        } else {
+            self.direct_client
+                .get(url)
+                .header(header_name, header_value)
+                .send()
+                .await
+                .map_err(ProxyError::from)
+        }
+    }
+
     /// Check if proxy is currently enabled
     pub async fn is_enabled(&self) -> bool {
         self.config.read().await.enabled
