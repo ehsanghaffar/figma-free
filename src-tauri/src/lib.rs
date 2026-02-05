@@ -2,19 +2,24 @@
 //! A cross-platform desktop application that wraps Figma with built-in proxy capabilities
 
 use std::sync::Mutex;
-use tokio::sync::RwLock;
 use tauri::{
-    Emitter, Manager, menu::{MenuBuilder, MenuItemBuilder}, tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent, TrayIcon}
+    menu::{MenuBuilder, MenuItemBuilder},
+    tray::{MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent},
+    Emitter, Manager,
 };
+use tokio::sync::RwLock;
 
-pub mod proxy;
-pub mod network;
-pub mod utils;
 pub mod commands;
+pub mod network;
+pub mod proxy;
+pub mod utils;
 
-use proxy::{create_proxy_manager, create_health_monitor, SharedProxyManager, SharedHealthMonitor, HealthCheckConfig};
 use network::InterceptorConfig;
-use utils::{AdvancedSettings, get_proxy_password};
+use proxy::{
+    create_health_monitor, create_proxy_manager, HealthCheckConfig, SharedHealthMonitor,
+    SharedProxyManager,
+};
+use utils::{get_proxy_password, AdvancedSettings};
 
 /// Global application state
 pub struct AppState {
@@ -29,11 +34,9 @@ pub struct AppState {
 impl AppState {
     pub fn new() -> Self {
         let proxy_manager = create_proxy_manager();
-        let health_monitor = create_health_monitor(
-            proxy_manager.clone(),
-            Some(HealthCheckConfig::default()),
-        );
-        
+        let health_monitor =
+            create_health_monitor(proxy_manager.clone(), Some(HealthCheckConfig::default()));
+
         Self {
             proxy_manager,
             health_monitor,
@@ -55,12 +58,12 @@ impl Default for AppState {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Initialize logging
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
-        .init();
-    
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+
     log::info!("Starting Figma Desktop v{}", env!("CARGO_PKG_VERSION"));
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_store::Builder::default().build())
@@ -68,13 +71,13 @@ pub fn run() {
         .manage(AppState::new())
         .setup(|app| {
             let handle = app.handle().clone();
-            
+
             // Create system tray
             let tray = setup_system_tray(&handle)?;
             if let Ok(mut slot) = app.state::<AppState>().tray_icon.lock() {
                 *slot = Some(tray);
             }
-            
+
             // Get the main window
             if let Some(window) = app.get_webview_window("main") {
                 // Set up window event handlers
@@ -90,7 +93,7 @@ pub fn run() {
                     }
                 });
             }
-            
+
             // Start health monitoring in background
             let state = app.state::<AppState>();
             let health_monitor = state.health_monitor.clone();
@@ -98,7 +101,7 @@ pub fn run() {
                 health_monitor.start().await;
                 health_monitor.run_loop().await;
             });
-            
+
             log::info!("Application setup complete");
             Ok(())
         })
@@ -132,12 +135,19 @@ fn setup_system_tray(handle: &tauri::AppHandle) -> Result<TrayIcon, Box<dyn std:
     let settings = MenuItemBuilder::with_id("settings", "Settings...").build(handle)?;
     let separator = tauri::menu::PredefinedMenuItem::separator(handle)?;
     let quit = MenuItemBuilder::with_id("quit", "Quit").build(handle)?;
-    
+
     // Build menu
     let menu = MenuBuilder::new(handle)
-        .items(&[&show, &toggle_proxy, &separator, &settings, &separator, &quit])
+        .items(&[
+            &show,
+            &toggle_proxy,
+            &separator,
+            &settings,
+            &separator,
+            &quit,
+        ])
         .build()?;
-    
+
     // Create tray icon
     let tray = TrayIconBuilder::new()
         .menu(&menu)
@@ -159,14 +169,15 @@ fn setup_system_tray(handle: &tauri::AppHandle) -> Result<TrayIcon, Box<dyn std:
                             if !is_enabled {
                                 let mut config = state.proxy_manager.get_config().await;
                                 if config.username.is_some() && config.password.is_none() {
-                                    let password = get_proxy_password(&config.host, config.port).ok();
+                                    let password =
+                                        get_proxy_password(&config.host, config.port).ok();
                                     config.password = password;
                                 }
                                 let _ = state.proxy_manager.configure(config).await;
                             } else {
                                 let _ = state.proxy_manager.toggle(false).await;
                             }
-                            
+
                             // Emit event to frontend
                             let _ = app_clone.emit("proxy-toggled", !is_enabled);
                         }
@@ -198,6 +209,6 @@ fn setup_system_tray(handle: &tauri::AppHandle) -> Result<TrayIcon, Box<dyn std:
             }
         })
         .build(handle)?;
-    
+
     Ok(tray)
 }

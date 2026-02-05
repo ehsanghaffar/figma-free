@@ -64,6 +64,9 @@
     "core:window:allow-set-min-size",
     "core:window:allow-set-max-size",
     "core:window:allow-set-position",
-    "core:window:allow-start-dragging"
+    "core:window:allow-start-dragging",
+    "dialog:default",
+    "dialog:allow-message",
+    "dialog:allow-open"
   ]
 }

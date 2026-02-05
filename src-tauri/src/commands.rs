@@ -1,9 +1,6 @@
 //! Tauri commands for proxy and application control
 //! These commands are invoked from the frontend
-use crate::proxy::{
-    ProxyConfig, ProxyPreset, ProxyStatus, ProxyTestResult, ProxyType, SharedHealthMonitor,
-    SharedProxyManager,
-};
+use crate::proxy::{ProxyConfig, ProxyPreset, ProxyStatus, ProxyTestResult, ProxyType};
 use crate::utils::{
     delete_proxy_password, get_proxy_password, store_proxy_password, AdvancedSettings,
 };
@@ -192,13 +189,22 @@ pub async fn create_figma_window(app: tauri::AppHandle, proxy: String) -> Result
         return Ok(());
     }
 
-    // 1. Parse the proxy URL (e.g., "http://127.0.0.1:1080" or "socks5://...")
-    let mut proxy_url = Url::parse(&proxy).map_err(|_| "Invalid Proxy URL")?;
-    if proxy_url.scheme() == "https" {
-        proxy_url.set_scheme("http").map_err(|_| "Invalid proxy scheme")?;
+    // Parse and validate the proxy URL
+    let mut proxy_url = Url::parse(&proxy).map_err(|e| format!("Invalid Proxy URL: {}", e))?;
+
+    // Validate scheme and normalize
+    match proxy_url.scheme() {
+        "http" | "https" | "socks5" => {
+            if proxy_url.scheme() == "https" {
+                proxy_url
+                    .set_scheme("http")
+                    .map_err(|_| "Failed to normalize proxy scheme")?;
+            }
+        }
+        _ => return Err(format!("Unsupported proxy scheme: {}", proxy_url.scheme())),
     }
 
-    // 2. Build the window with Figma as the EXTERNAL URL
+    // Build the window with Figma as the EXTERNAL URL
     let _window = WebviewWindowBuilder::new(
         &app,
         "figma_main",
@@ -206,7 +212,6 @@ pub async fn create_figma_window(app: tauri::AppHandle, proxy: String) -> Result
     )
     .title("Figma - Bypassed")
     .inner_size(1280.0, 800.0)
-    // This is the "Magic" line that bypasses the filter
     .proxy_url(proxy_url)
     .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
     .build()

@@ -2,9 +2,9 @@
 //! Handles all proxy-related functionality
 
 pub mod config;
-pub mod manager;
 pub mod health;
+pub mod manager;
 
 pub use config::*;
-pub use manager::*;
 pub use health::*;
+pub use manager::*;

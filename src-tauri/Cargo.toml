@@ -51,13 +51,9 @@ regex = "1"
 
 # Directory utilities
 dirs = "5"
+tauri-plugin-dialog = "2"
 
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
-
-
-[unstable]
-unstable-options = true
-build-std = ["core", "alloc"]
 

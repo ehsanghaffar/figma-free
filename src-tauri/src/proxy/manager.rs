@@ -1,11 +1,11 @@
 //! Proxy manager module
 //! Handles proxy client creation, connection management, and request routing
 
+use crate::proxy::config::{ProxyConfig, ProxyStatus, ProxyTestResult, ProxyType};
+use reqwest::{Client, Proxy};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use reqwest::{Client, Proxy};
 use tokio::sync::RwLock;
-use crate::proxy::config::{ProxyConfig, ProxyTestResult, ProxyStatus, ProxyType};
 
 /// Custom error type for proxy operations
 #[derive(Debug, thiserror::Error)]
@@ -67,7 +67,8 @@ impl ProxyManager {
         let proxy = match config.proxy_type {
             ProxyType::Socks5 => Proxy::all(&proxy_url),
             ProxyType::Http | ProxyType::Https => Proxy::all(&proxy_url),
-        }.map_err(|e| ProxyError::InvalidUrl(e.to_string()))?;
+        }
+        .map_err(|e| ProxyError::InvalidUrl(e.to_string()))?;
 
         // Build new client with proxy
         let client = Client::builder()
@@ -81,7 +82,7 @@ impl ProxyManager {
         // Update state
         *self.client.write().await = Some(client);
         *self.config.write().await = config.clone();
-        
+
         // Update status
         let mut status = self.status.write().await;
         status.config = Some(ProxyConfig {
@@ -127,12 +128,12 @@ impl ProxyManager {
 
         // Measure connection time
         let start = Instant::now();
-        
+
         // Test connection by fetching a simple IP check service
         match client.get("https://api.ipify.org?format=json").send().await {
             Ok(response) => {
                 let latency = start.elapsed().as_millis() as u64;
-                
+
                 if response.status().is_success() {
                     // Try to get the external IP
                     let external_ip = response
@@ -181,7 +182,12 @@ impl ProxyManager {
     }
 
     /// Update connection status after health check
-    pub async fn update_status(&self, is_connected: bool, latency_ms: Option<u64>, error: Option<String>) {
+    pub async fn update_status(
+        &self,
+        is_connected: bool,
+        latency_ms: Option<u64>,
+        error: Option<String>,
+    ) {
         let mut status = self.status.write().await;
         status.is_connected = is_connected;
         status.latency_ms = latency_ms;
@@ -197,7 +203,7 @@ impl ProxyManager {
     /// Make a request through the proxy (if enabled) or directly
     pub async fn request(&self, url: &str) -> Result<reqwest::Response, ProxyError> {
         let config = self.config.read().await;
-        
+
         if config.enabled {
             let client = self.client.read().await;
             if let Some(ref client) = *client {
@@ -206,7 +212,11 @@ impl ProxyManager {
                 Err(ProxyError::NotConfigured)
             }
         } else {
-            self.direct_client.get(url).send().await.map_err(ProxyError::from)
+            self.direct_client
+                .get(url)
+                .send()
+                .await
+                .map_err(ProxyError::from)
         }
     }
 

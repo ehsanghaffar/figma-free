@@ -8,7 +8,8 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { InputGroup, InputGroupInput } from "./ui/input-group";
 import { Button } from "./ui/button";
-import { toast } from "sonner";
+import { message } from '@tauri-apps/plugin-dialog';
+
 
 interface FormErrors {
   host?: string;
@@ -46,8 +47,8 @@ export function ProxyConfigSection() {
 
   const normalizeConfig = (input: ProxyConfig): ProxyConfig => ({
     ...input,
-    username: input.username?.trim() ? input.username.trim() : undefined,
-    password: input.password?.trim() ? input.password : undefined,
+    username: input.username?.trim() || undefined,
+    password: input.password?.trim() || undefined,
   });
 
   const handleSave = async () => {
@@ -60,33 +61,34 @@ export function ProxyConfigSection() {
     setConfig(sanitizedConfig);
 
     if (sanitizedConfig.enabled) {
-      const result = await testConnection();
-      if (result.success) {
-        await saveConfig();
-        await toggleProxy(true);
-        toast("Proxy configured and enabled successfully!", {
-          description: <>latency: {result.latencyMs}ms</>,
-          icon: <CheckCircle className="size-4 text-green-600" />,
-          duration: 2000
-        });
-        try {
-          await invoke("trigger_health_check");
-        } catch (e) {
-          // ignore failures
+      try {
+        const result = await testConnection();
+        if (result.success) {
+          await saveConfig();
+          await toggleProxy(true);
+          message("Proxy configuration applied successfully!", {title: "Success", kind: "info"});
+          try {
+            await invoke("trigger_health_check");
+          } catch (e) {
+            console.error('Health check failed:', e);
+          }
+          await refreshStatus();
+        } else {
+          message("Proxy test failed!", {title: "Error"});
         }
-        await refreshStatus();
-      } else {
-        toast.error("Proxy test failed!", {
-          description: result.error,
-          icon: <XCircle className="size-4 text-red-600" />,
-        });
+      } catch (err) {
+        message(`Failed to apply configuration: ${String(err)}`, {title: "Error"});
       }
       return;
     }
 
-    await saveConfig();
-    await toggleProxy(false);
-    await refreshStatus();
+    try {
+      await saveConfig();
+      await toggleProxy(false);
+      await refreshStatus();
+    } catch (err) {
+      message(`Failed to save configuration: ${String(err)}`, {title: "Error"});
+    }
   };
 
   const handleTest = async () => {

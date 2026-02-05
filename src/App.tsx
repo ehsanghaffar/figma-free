@@ -23,13 +23,13 @@ function App() {
     <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
       {/* Custom Title Bar */}
       <TitleBar />
+      <Toaster position="top-center" />
 
       {/* Main Content */}
       <HomeScreen />
 
       {/* Settings Overlay */}
       <SettingsPanel />
-      <Toaster offset={{ bottom: '24px', right: "16px", left: "16px" }}  />
     </div>
   );
 }

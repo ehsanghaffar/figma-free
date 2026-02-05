@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { useProxyStore, useSettingsStore } from '../store/proxyStore';
-import type { ConnectionStatus, ConnectionInfo } from '../types/proxy';
+import type { ConnectionInfo, ConnectionStatus } from '../types/proxy';
 import { toast } from "sonner"
 
 /**
@@ -9,38 +9,43 @@ import { toast } from "sonner"
  */
 export function useProxy() {
   const store = useProxyStore();
+  const loadConfig = useProxyStore(state => state.loadConfig);
+  const refreshStatus = useProxyStore(state => state.refreshStatus);
   
   // Initialize on mount
   useEffect(() => {
-    store.loadConfig();
-    store.refreshStatus();
+    loadConfig();
+    refreshStatus();
     
     // Set up periodic status refresh
     const interval = setInterval(() => {
-      store.refreshStatus();
+      refreshStatus();
     }, 5000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [loadConfig, refreshStatus]);
   
   // Listen for proxy toggle events from system tray
   useEffect(() => {
+    const setConfig = store.setConfig;
+    const refresh = store.refreshStatus;
+    
     const unlisten = listen<boolean>('proxy-toggled', (event) => {
-      store.setConfig({ enabled: event.payload });
-      store.refreshStatus();
+      setConfig({ enabled: event.payload });
+      refresh();
     });
     
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, []);
+  }, [store.setConfig, store.refreshStatus]);
   
   const saveAndEnable = useCallback(async () => {
     await store.saveConfig();
     if (!store.config.enabled) {
       await store.toggleProxy(true);
     }
-  }, [store]);
+  }, [store.saveConfig, store.toggleProxy, store.config.enabled]);
   
   const testAndSave = useCallback(async () => {
     const result = await store.testConnection();
@@ -54,7 +59,7 @@ export function useProxy() {
       })
       return result;
     }
-  }, [store]);
+  }, [store.testConnection, store.saveConfig]);
   
   return {
     config: store.config,
@@ -105,75 +110,70 @@ export function useConnectionStatus(): ConnectionInfo {
  * Hook for keyboard shortcuts
  */
 export function useKeyboardShortcuts() {
-  const settingsStore = useSettingsStore();
-  const proxyStore = useProxyStore();
+  const settingsOpen = useSettingsStore(state => state.open);
+  const settingsClose = useSettingsStore(state => state.close);
+  const isOpen = useSettingsStore(state => state.isOpen);
+  const toggleProxy = useProxyStore(state => state.toggleProxy);
+  const enabled = useProxyStore(state => state.config.enabled);
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd/Ctrl + , to open settings
       if ((e.metaKey || e.ctrlKey) && e.key === ',') {
         e.preventDefault();
-        settingsStore.open();
+        settingsOpen();
       }
       
       // Escape to close settings
-      if (e.key === 'Escape' && settingsStore.isOpen) {
+      if (e.key === 'Escape' && isOpen) {
         e.preventDefault();
-        settingsStore.close();
+        settingsClose();
       }
       
       // Cmd/Ctrl + Shift + P to toggle proxy
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'p') {
         e.preventDefault();
-        proxyStore.toggleProxy(!proxyStore.config.enabled);
+        toggleProxy(!enabled);
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [settingsStore, proxyStore]);
+  }, [settingsOpen, settingsClose, isOpen, toggleProxy, enabled]);
 }
 
 /**
  * Hook for listening to settings open event from system tray
  */
 export function useSettingsListener() {
-  const settingsStore = useSettingsStore();
+  const settingsOpen = useSettingsStore(state => state.open);
   
   useEffect(() => {
     const unlisten = listen('open-settings', () => {
-      settingsStore.open();
+      settingsOpen();
     });
     
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, [settingsStore]);
+  }, [settingsOpen]);
 }
 
-type DNSStatus = string | boolean | null;
 /**
  * Hook to manage advanced settings 
  */
 export function useAdvancedSettings() {
-  const store = useProxyStore();
+  const loadAdvancedSettings = useProxyStore(state => state.loadAdvancedSettings);
+  const advancedSettings = useProxyStore(state => state.advancedSettings);
   
   useEffect(() => {
-    store.loadAdvancedSettings();
-  }, []);
+    loadAdvancedSettings();
+  }, [loadAdvancedSettings]);
 
-
-
-  let hasCustomDNS: DNSStatus = false;
-  if (store.advancedSettings.customDns) {
-    hasCustomDNS = store.advancedSettings.customDns.trim();
-  } else {
-    hasCustomDNS = false;
-  }
-  
+  const hasCustomDNS = advancedSettings.customDns?.trim() || null;
   
   return {
-    advancedSettings: store.advancedSettings,
+    advancedSettings,
     DNSStatus: hasCustomDNS,
   };
 }

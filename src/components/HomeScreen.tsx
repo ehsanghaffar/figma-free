@@ -8,6 +8,9 @@ import { Card, CardContent } from "./ui/card";
 import { ConnectionStatusSection } from "./ConnectionStatusSection";
 import { ProxyConfigSection } from "./ProxyConfigSection";
 import { DNSConfigSection } from "./DNSConfigSection";
+import { toast } from "sonner";
+import { message } from '@tauri-apps/plugin-dialog';
+
 
 export function HomeScreen() {
   // Initialize hooks
@@ -17,11 +20,11 @@ export function HomeScreen() {
   const { status } = useConnectionStatus();
   const config = useProxyStore((state) => state.config);
   const { DNSStatus } = useAdvancedSettings();
-  console.log("Connection status:", DNSStatus);
 
-  // funtion to check if custom DNS is set and/or proxy is connected to enable the launch button
   const isLaunchEnabled = () => {
-    return (config.enabled && status === "connected") || (DNSStatus && typeof DNSStatus === "string" && DNSStatus.length > 0);
+    const hasValidDNS = typeof DNSStatus === 'string' && DNSStatus.length > 0;
+    const hasValidProxy = config.enabled && status === "connected";
+    return hasValidProxy || hasValidDNS;
   };
 
   const launchFigma = async () => {
@@ -32,7 +35,9 @@ export function HomeScreen() {
       const proxy = `${scheme}://${host}:${port}`;
       await invoke("create_figma_window", { proxy });
     } catch (err) {
-      alert("Failed to launch: " + err);
+      toast.error("Failed to launch Figma", {
+        description: String(err),
+      });
     }
   };
 

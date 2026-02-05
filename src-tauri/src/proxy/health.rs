@@ -6,8 +6,8 @@ use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use tokio::time::interval;
 
-use crate::proxy::manager::SharedProxyManager;
 use crate::proxy::config::ProxyTestResult;
+use crate::proxy::manager::SharedProxyManager;
 
 /// Health check configuration
 #[derive(Debug, Clone)]
@@ -64,7 +64,10 @@ impl HealthMonitor {
         *running = true;
         drop(running);
 
-        log::info!("Starting health monitor with {}s interval", self.config.interval_secs);
+        log::info!(
+            "Starting health monitor with {}s interval",
+            self.config.interval_secs
+        );
     }
 
     /// Stop the health monitoring
@@ -77,7 +80,7 @@ impl HealthMonitor {
     /// Perform a single health check
     pub async fn check_health(&self) -> bool {
         let proxy_manager = &self.proxy_manager;
-        
+
         // Skip if proxy is not enabled
         if !proxy_manager.is_enabled().await {
             return true; // Direct connection assumed healthy
@@ -118,24 +121,31 @@ impl HealthMonitor {
 
         if result.success {
             *self.consecutive_failures.write().await = 0;
-            proxy_manager.update_status(true, result.latency_ms, None).await;
+            proxy_manager
+                .update_status(true, result.latency_ms, None)
+                .await;
             log::debug!("Health check passed, latency: {:?}ms", result.latency_ms);
             true
         } else {
             let mut failures = self.consecutive_failures.write().await;
             *failures += 1;
-            
+
             let error = result.error.clone();
             let is_disconnected = *failures >= self.config.failure_threshold;
-            
-            proxy_manager.update_status(!is_disconnected, None, error.clone()).await;
-            
+
+            proxy_manager
+                .update_status(!is_disconnected, None, error.clone())
+                .await;
+
             if is_disconnected {
-                log::warn!("Health check failed {} times, marking as disconnected", *failures);
+                log::warn!(
+                    "Health check failed {} times, marking as disconnected",
+                    *failures
+                );
             } else {
                 log::debug!("Health check failed ({}): {:?}", *failures, error);
             }
-            
+
             !is_disconnected
         }
     }
@@ -143,10 +153,10 @@ impl HealthMonitor {
     /// Run the health check loop (call this in a spawned task)
     pub async fn run_loop(self: Arc<Self>) {
         let mut interval = interval(Duration::from_secs(self.config.interval_secs));
-        
+
         loop {
             interval.tick().await;
-            
+
             if !*self.is_running.read().await {
                 break;
             }

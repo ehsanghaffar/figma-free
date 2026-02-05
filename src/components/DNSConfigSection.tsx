@@ -6,6 +6,7 @@ import { Label } from './ui/label';
 import { InputGroup, InputGroupInput } from './ui/input-group';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
+import { toast } from 'sonner';
 
 interface DNSConfig {
   enabled: boolean;
@@ -16,14 +17,14 @@ interface DNSConfig {
 export function DNSConfigSection() {
   const { advancedSettings, setAdvancedSettings, saveAdvancedSettings, isLoading } = useProxyStore();
   const [localConfig, setLocalConfig] = useState<DNSConfig>({
-    enabled: advancedSettings.customDns?.length ? true : false,
+    enabled: !!advancedSettings.customDns?.trim(),
     dnsServers: advancedSettings.customDns || '',
     customHeaders: advancedSettings.customUserAgent || '',
   });
 
   useEffect(() => {
     setLocalConfig({
-      enabled: advancedSettings.customDns?.length ? true : false,
+      enabled: !!advancedSettings.customDns?.trim(),
       dnsServers: advancedSettings.customDns || '',
       customHeaders: advancedSettings.customUserAgent || '',
     });
@@ -33,14 +34,36 @@ export function DNSConfigSection() {
     setLocalConfig((prev) => ({ ...prev, [field]: value }));
   };
 
+  const validateDNS = (dns: string): boolean => {
+    if (!dns.trim()) return true;
+    const servers = dns.split(',').map(s => s.trim());
+    const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+    return servers.every(server => ipv4Regex.test(server) && 
+      server.split('.').every(octet => parseInt(octet) <= 255));
+  };
+
   const handleSave = async () => {
+    if (localConfig.enabled && !validateDNS(localConfig.dnsServers)) {
+      toast.error('Invalid DNS format', {
+        description: 'Please enter valid IPv4 addresses separated by commas',
+      });
+      return;
+    }
+    
     const updatedSettings = {
       ...advancedSettings,
-      customDns: localConfig.enabled ? localConfig.dnsServers : null,
-      customUserAgent: localConfig.enabled ? localConfig.customHeaders : null,
+      customDns: localConfig.enabled ? localConfig.dnsServers.trim() || null : null,
+      customUserAgent: localConfig.enabled ? localConfig.customHeaders.trim() || null : null,
     };
     setAdvancedSettings(updatedSettings);
-    await saveAdvancedSettings();
+    try {
+      await saveAdvancedSettings();
+      toast.success('DNS & Headers saved successfully');
+    } catch (err) {
+      toast.error('Failed to save settings', {
+        description: String(err),
+      });
+    }
   };
 
   const isDisabled = !localConfig.enabled;
@@ -101,7 +124,7 @@ export function DNSConfigSection() {
             value={localConfig.customHeaders}
             onChange={(e) => handleChange('customHeaders', e.target.value)}
             placeholder='{"User-Agent": "Custom Agent"}'
-            disabled={true}
+            disabled={isDisabled}
             className="font-mono text-sm"
           />
         </div>

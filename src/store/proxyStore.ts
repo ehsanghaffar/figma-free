@@ -78,7 +78,6 @@ export const useProxyStore = create<ProxyStore>()(
         } catch (err) {
           const error = err instanceof Error ? err.message : String(err);
           set({ error });
-          throw err;
         } finally {
           set({ isLoading: false });
         }
@@ -135,7 +134,6 @@ export const useProxyStore = create<ProxyStore>()(
         } catch (err) {
           const error = err instanceof Error ? err.message : String(err);
           set({ error });
-          throw err;
         } finally {
           set({ isLoading: false });
         }
@@ -165,7 +163,6 @@ export const useProxyStore = create<ProxyStore>()(
         } catch (err) {
           const error = err instanceof Error ? err.message : String(err);
           set({ error });
-          throw err;
         } finally {
           set({ isLoading: false });
         }
