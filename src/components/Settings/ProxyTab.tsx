@@ -30,11 +30,18 @@ export function ProxyTab() {
     setLocalConfig((prev: ProxyConfig) => ({ ...prev, [field]: value }));
   };
 
+  const normalizeConfig = (input: ProxyConfig): ProxyConfig => ({
+    ...input,
+    username: input.username?.trim() ? input.username.trim() : undefined,
+    password: input.password?.trim() ? input.password : undefined,
+  });
+
   const handleSave = async () => {
     // Apply config and attempt connection if enabled
-    setConfig(localConfig);
+    const sanitizedConfig = normalizeConfig(localConfig);
+    setConfig(sanitizedConfig);
 
-    if (localConfig.enabled) {
+    if (sanitizedConfig.enabled) {
       const result = await testConnection();
       if (result.success) {
         await saveConfig();
@@ -57,7 +64,8 @@ export function ProxyTab() {
   };
 
   const handleTest = async () => {
-    setConfig(localConfig);
+    const sanitizedConfig = normalizeConfig(localConfig);
+    setConfig(sanitizedConfig);
     await testConnection();
   };
 

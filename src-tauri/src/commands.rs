@@ -19,13 +19,16 @@ pub async fn set_proxy_config(
 ) -> Result<(), String> {
     log::info!("Setting proxy config: {:?}", config.host);
 
-    // Store password securely if provided
-    if let (Some(ref password), true) = (
-        &config.password,
-        !config.password.as_ref().map_or(true, |p| p.is_empty()),
-    ) {
-        store_proxy_password(&config.host, config.port, password)
-            .map_err(|e| format!("Failed to store password: {}", e))?;
+    // Store or clear password securely if provided
+    if let Some(ref password) = config.password {
+        if !password.is_empty() {
+            store_proxy_password(&config.host, config.port, password)
+                .map_err(|e| format!("Failed to store password: {}", e))?;
+        } else if !config.host.is_empty() {
+            let _ = delete_proxy_password(&config.host, config.port);
+        }
+    } else if config.username.is_none() && !config.host.is_empty() {
+        let _ = delete_proxy_password(&config.host, config.port);
     }
 
     // Configure proxy manager
@@ -72,11 +75,24 @@ pub async fn get_proxy_status(state: State<'_, AppState>) -> Result<ProxyStatus,
 #[tauri::command]
 pub async fn toggle_proxy(enabled: bool, state: State<'_, AppState>) -> Result<(), String> {
     log::info!("Toggling proxy: {}", enabled);
-    state
-        .proxy_manager
-        .toggle(enabled)
-        .await
-        .map_err(|e| e.to_string())
+    if enabled {
+        let mut config = state.proxy_manager.get_config().await;
+        if config.username.is_some() && config.password.is_none() {
+            let password = get_proxy_password(&config.host, config.port).ok();
+            config.password = password;
+        }
+        state
+            .proxy_manager
+            .configure(config)
+            .await
+            .map_err(|e| e.to_string())
+    } else {
+        state
+            .proxy_manager
+            .toggle(false)
+            .await
+            .map_err(|e| e.to_string())
+    }
 }
 
 /// Get current proxy configuration
@@ -168,8 +184,19 @@ pub async fn complete_first_run(state: State<'_, AppState>) -> Result<(), String
 
 #[tauri::command]
 pub async fn create_figma_window(app: tauri::AppHandle, proxy: String) -> Result<(), String> {
+    // Reuse existing window if already open
+    if let Some(window) = app.get_webview_window("figma_main") {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+        return Ok(());
+    }
+
     // 1. Parse the proxy URL (e.g., "http://127.0.0.1:1080" or "socks5://...")
-    let proxy_url = Url::parse(&proxy).map_err(|_| "Invalid Proxy URL")?;
+    let mut proxy_url = Url::parse(&proxy).map_err(|_| "Invalid Proxy URL")?;
+    if proxy_url.scheme() == "https" {
+        proxy_url.set_scheme("http").map_err(|_| "Invalid proxy scheme")?;
+    }
 
     // 2. Build the window with Figma as the EXTERNAL URL
     let _window = WebviewWindowBuilder::new(
@@ -178,25 +205,7 @@ pub async fn create_figma_window(app: tauri::AppHandle, proxy: String) -> Result
         WebviewUrl::External("https://www.figma.com/".parse().unwrap()),
     )
     .title("Figma - Bypassed")
-    .initialization_script(
-        r#"
-        // Override fetch to bypass CORS and proxy issues
-        (function() {
-            const originalFetch = window.fetch;
-            window.fetch = function(...args) {
-                const url = args[0];
-                // Check if the URL is a Figma API endpoint
-                if (typeof url === 'string' && url.includes('api.figma.com')) {
-                    // Modify the request to go through the proxy
-                    const modifiedArgs = [...args];
-                    modifiedArgs[0] = 'https://www.figma.com/'; // Redirect to Figma homepage to bypass CORS
-                    return originalFetch.apply(this, modifiedArgs);
-                }
-                return originalFetch.apply(this, args);
-            };
-        })();
-        "#,
-    ).inner_size(1280.0, 800.0)
+    .inner_size(1280.0, 800.0)
     // This is the "Magic" line that bypasses the filter
     .proxy_url(proxy_url)
     .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")

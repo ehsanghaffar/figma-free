@@ -24,7 +24,7 @@ function App() {
 
   const launchFigma = async () => {
     try {
-      const scheme = config.type || 'http';
+      const scheme = config.type === 'https' ? 'http' : (config.type || 'http');
       const host = config.host || '127.0.0.1';
       const port = config.port || 1080;
       const proxy = `${scheme}://${host}:${port}`;

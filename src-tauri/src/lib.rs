@@ -1,9 +1,10 @@
 //! Figma Desktop Wrapper with Proxy Support
 //! A cross-platform desktop application that wraps Figma with built-in proxy capabilities
 
+use std::sync::Mutex;
 use tokio::sync::RwLock;
 use tauri::{
-    Emitter, Manager, menu::{MenuBuilder, MenuItemBuilder}, tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}
+    Emitter, Manager, menu::{MenuBuilder, MenuItemBuilder}, tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent, TrayIcon}
 };
 
 pub mod proxy;
@@ -13,7 +14,7 @@ pub mod commands;
 
 use proxy::{create_proxy_manager, create_health_monitor, SharedProxyManager, SharedHealthMonitor, HealthCheckConfig};
 use network::InterceptorConfig;
-use utils::AdvancedSettings;
+use utils::{AdvancedSettings, get_proxy_password};
 
 /// Global application state
 pub struct AppState {
@@ -22,6 +23,7 @@ pub struct AppState {
     pub interceptor_config: RwLock<InterceptorConfig>,
     pub advanced_settings: RwLock<AdvancedSettings>,
     pub is_first_run: RwLock<bool>,
+    pub tray_icon: Mutex<Option<TrayIcon>>,
 }
 
 impl AppState {
@@ -38,6 +40,7 @@ impl AppState {
             interceptor_config: RwLock::new(InterceptorConfig::default()),
             advanced_settings: RwLock::new(AdvancedSettings::default()),
             is_first_run: RwLock::new(true),
+            tray_icon: Mutex::new(None),
         }
     }
 }
@@ -67,7 +70,10 @@ pub fn run() {
             let handle = app.handle().clone();
             
             // Create system tray
-            setup_system_tray(&handle)?;
+            let tray = setup_system_tray(&handle)?;
+            if let Ok(mut slot) = app.state::<AppState>().tray_icon.lock() {
+                *slot = Some(tray);
+            }
             
             // Get the main window
             if let Some(window) = app.get_webview_window("main") {
@@ -119,7 +125,7 @@ pub fn run() {
 }
 
 /// Set up the system tray icon and menu
-fn setup_system_tray(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+fn setup_system_tray(handle: &tauri::AppHandle) -> Result<TrayIcon, Box<dyn std::error::Error>> {
     // Create menu items
     let show = MenuItemBuilder::with_id("show", "Show Window").build(handle)?;
     let toggle_proxy = MenuItemBuilder::with_id("toggle_proxy", "Toggle Proxy").build(handle)?;
@@ -133,7 +139,7 @@ fn setup_system_tray(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error
         .build()?;
     
     // Create tray icon
-    let _tray = TrayIconBuilder::new()
+    let tray = TrayIconBuilder::new()
         .menu(&menu)
         .tooltip("Figma Desktop")
         .on_menu_event(move |app, event| {
@@ -150,7 +156,16 @@ fn setup_system_tray(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error
                     tauri::async_runtime::spawn(async move {
                         if let Some(state) = app_clone.try_state::<AppState>() {
                             let is_enabled = state.proxy_manager.is_enabled().await;
-                            let _ = state.proxy_manager.toggle(!is_enabled).await;
+                            if !is_enabled {
+                                let mut config = state.proxy_manager.get_config().await;
+                                if config.username.is_some() && config.password.is_none() {
+                                    let password = get_proxy_password(&config.host, config.port).ok();
+                                    config.password = password;
+                                }
+                                let _ = state.proxy_manager.configure(config).await;
+                            } else {
+                                let _ = state.proxy_manager.toggle(false).await;
+                            }
                             
                             // Emit event to frontend
                             let _ = app_clone.emit("proxy-toggled", !is_enabled);
@@ -184,5 +199,5 @@ fn setup_system_tray(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error
         })
         .build(handle)?;
     
-    Ok(())
+    Ok(tray)
 }
