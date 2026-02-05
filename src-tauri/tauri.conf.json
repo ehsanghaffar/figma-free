@@ -24,7 +24,12 @@
         "center": true,
         "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         "visible": true,
-        "focus": true
+        "hiddenTitle": true,
+        "titleBarStyle": "Overlay",
+        "trafficLightPosition": {
+          "x": -10,
+          "y": -10
+        }
       }
     ],
     "trayIcon": {

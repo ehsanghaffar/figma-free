@@ -7,9 +7,26 @@
     "core:default",
     "opener:default",
     "http:default",
+    "store:default",
     "core:webview:default",
     "notification:default",
+    "core:event:default",
+    "core:app:default",
+    "core:menu:default",
+    "core:tray:default",
+
+    "http:allow-fetch",
+    "http:allow-fetch-read-body",
+    "store:allow-get",
+    "store:allow-save",
+    "store:allow-set",
+    "store:allow-get-store",
+    "store:allow-load",
+    "store:allow-reload",
     "notification:allow-is-permission-granted",
+    "notification:allow-notify",
+    "notification:allow-show",
+    "notification:allow-permission-state",
     "core:window:allow-create",
     "core:webview:allow-create-webview",
     "core:window:allow-show",
@@ -30,6 +47,23 @@
           "url": "https://account.google.com/*"
         }
       ]
-    }
+    },
+    "core:window:allow-hide",
+    "core:window:allow-close",
+    "core:window:allow-maximize",
+    "core:window:allow-unmaximize",
+    "core:window:allow-minimize",
+    "core:window:allow-is-minimized",
+    "core:window:allow-is-fullscreen",
+    "core:window:allow-set-title",
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-set-resizable",
+    "core:window:allow-set-fullscreen",
+    "core:window:allow-set-decorations",
+    "core:window:allow-set-size",
+    "core:window:allow-set-min-size",
+    "core:window:allow-set-max-size",
+    "core:window:allow-set-position",
+    "core:window:allow-start-dragging"
   ]
 }

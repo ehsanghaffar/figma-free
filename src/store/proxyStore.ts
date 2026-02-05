@@ -219,8 +219,8 @@ interface SettingsStore {
 
 export const useSettingsStore = create<SettingsStore>((set) => ({
   isOpen: false,
-  activeTab: 'proxy',
-  open: (tab: 'proxy' | 'advanced' | 'about' = 'proxy') => set({ isOpen: true, activeTab: tab }),
+  activeTab: 'advanced',
+  open: (tab: 'proxy' | 'advanced' | 'about' = 'advanced') => set({ isOpen: true, activeTab: tab }),
   close: () => set({ isOpen: false }),
   setTab: (tab: 'proxy' | 'advanced' | 'about') => set({ activeTab: tab }),
 }));

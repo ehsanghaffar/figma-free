@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, CheckCircle, XCircle, Play } from 'lucide-react';
 import { useProxy } from '../../hooks/useProxy';
 import type { ProxyType, ProxyConfig } from '../../types/proxy';
+import { invoke } from '@tauri-apps/api/core';
 
 export function ProxyTab() {
   const {
@@ -9,12 +10,14 @@ export function ProxyTab() {
     setConfig,
     saveConfig,
     testConnection,
+    toggleProxy,
+    refreshStatus,
     testResult,
     isTesting,
     isLoading,
     error,
     clearError,
-    presets,
+    // presets,
   } = useProxy();
 
   const [localConfig, setLocalConfig] = useState<ProxyConfig>(config);
@@ -28,8 +31,29 @@ export function ProxyTab() {
   };
 
   const handleSave = async () => {
+    // Apply config and attempt connection if enabled
     setConfig(localConfig);
+
+    if (localConfig.enabled) {
+      const result = await testConnection();
+      if (result.success) {
+        await saveConfig();
+        // Ensure proxy is toggled on and status is refreshed immediately
+        await toggleProxy(true);
+        try {
+          await invoke('trigger_health_check');
+        } catch (e) {
+          // ignore failures, background monitor will update eventually
+        }
+        await refreshStatus();
+      }
+      return;
+    }
+
+    // If disabled, just save and ensure proxy is off
     await saveConfig();
+    await toggleProxy(false);
+    await refreshStatus();
   };
 
   const handleTest = async () => {
@@ -37,18 +61,18 @@ export function ProxyTab() {
     await testConnection();
   };
 
-  const handlePresetSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedName = e.target.value;
-    const preset = presets.find((p: { name: string }) => p.name === selectedName);
-    if (preset) {
-      setLocalConfig((prev: ProxyConfig) => ({
-        ...prev,
-        type: preset.proxyType,
-        host: preset.host,
-        port: preset.port,
-      }));
-    }
-  };
+  // const handlePresetSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  //   const selectedName = e.target.value;
+  //   const preset = presets.find((p: { name: string }) => p.name === selectedName);
+  //   if (preset) {
+  //     setLocalConfig((prev: ProxyConfig) => ({
+  //       ...prev,
+  //       type: preset.proxyType,
+  //       host: preset.host,
+  //       port: preset.port,
+  //     }));
+  //   }
+  // };
 
   return (
     <div className="space-y-6">
@@ -65,12 +89,12 @@ export function ProxyTab() {
             onChange={(e) => handleChange('enabled', e.target.checked)}
             className="sr-only peer"
           />
-          <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
         </label>
       </div>
 
       {/* Preset Selector */}
-      {presets.length > 0 && (
+      {/* {presets.length > 0 && (
         <div>
           <label className="block text-sm font-medium text-neutral-300 mb-2">
             Preset Servers
@@ -87,7 +111,7 @@ export function ProxyTab() {
             ))}
           </select>
         </div>
-      )}
+      )} */}
 
       {/* Proxy Type */}
       <div>

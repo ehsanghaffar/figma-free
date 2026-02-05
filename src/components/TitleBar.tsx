@@ -20,8 +20,10 @@ export function TitleBar() {
     }
   };
 
-  const handleClose = async () => {
+  const handleClose = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault(); // Prevent the default close behavior
     await appWindow.hide();
+
   };
 
   return (

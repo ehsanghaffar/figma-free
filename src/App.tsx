@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { TitleBar } from './components/TitleBar';
 import { SettingsPanel } from './components/SettingsPanel';
-import { useKeyboardShortcuts, useSettingsListener } from './hooks/useProxy';
+import { ProxyTab } from './components/Settings';
+import { useKeyboardShortcuts, useSettingsListener, useConnectionStatus } from './hooks/useProxy';
 import { useAppStore, useProxyStore } from './store/proxyStore';
 import { invoke } from '@tauri-apps/api/core';
+import { Figma } from 'lucide-react';
 
 function App() {
 
@@ -17,10 +19,15 @@ function App() {
   const loadAppInfo = useAppStore((state) => state.loadAppInfo);
   const loadConfig = useProxyStore((state) => state.loadConfig);
   const loadAdvancedSettings = useProxyStore((state) => state.loadAdvancedSettings);
-  const [proxy, setProxy] = useState("http://127.0.0.1:1080");
+  const { status } = useConnectionStatus();
+  const config = useProxyStore((state) => state.config);
 
   const launchFigma = async () => {
     try {
+      const scheme = config.type || 'http';
+      const host = config.host || '127.0.0.1';
+      const port = config.port || 1080;
+      const proxy = `${scheme}://${host}:${port}`;
       await invoke("create_figma_window", { proxy });
     } catch (err) {
       alert("Failed to launch: " + err);
@@ -30,15 +37,9 @@ function App() {
   useEffect( () => {
     loadAppInfo();
     loadAdvancedSettings();
-    loadConfig().then( (value) => {
-      if (value instanceof Error) {
-        console.error('Failed to load config:', value);
-        return;
-      }
-      setProxy(
-        `http://${value.host}:${value.port}`
-      );
-    })
+    loadConfig().catch((err) => {
+      console.error('Failed to load config:', err);
+    });
   }, [loadAppInfo, loadConfig, loadAdvancedSettings]);
   
   return (
@@ -46,14 +47,26 @@ function App() {
       {/* Custom Title Bar */}
       <TitleBar />
       
-      {/* Launch Figma button */}
-      <div className="p-4 bg-neutral-900 flex justify-end">
-        <button
-          onClick={launchFigma}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-        >
-          Launch Figma
-        </button>
+      {/* Main Content: Proxy configuration and action */}
+      <div className="flex-1 overflow-auto p-6 bg-neutral-950">
+        {/* Proxy configuration inline on first webview */}
+        <div className="max-w-2xl mx-auto bg-neutral-900 border border-neutral-800 rounded-xl p-6">
+          <h2 className="text-neutral-200 text-lg font-semibold mb-4">Proxy Settings</h2>
+          <ProxyTab />
+
+          {/* Open Figma action */}
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <button
+              onClick={launchFigma}
+              disabled={status !== 'connected'}
+              className="flex gap-3 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              title={status !== 'connected' ? 'Connect proxy successfully to enable' : 'Open Figma'}
+            >
+              <Figma />
+              Open Figma
+            </button>
+          </div>
+        </div>
       </div>
       
       {/* Settings Overlay */}

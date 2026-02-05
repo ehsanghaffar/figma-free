@@ -3,7 +3,7 @@ import { useSettingsStore } from '../store/proxyStore';
 import { ProxyTab, AdvancedTab, AboutTab } from './Settings';
 
 const tabs = [
-  { id: 'proxy' as const, label: 'Proxy', icon: Wifi },
+  // { id: 'proxy' as const, label: 'Proxy', icon: Wifi },
   { id: 'advanced' as const, label: 'Advanced', icon: Settings },
   { id: 'about' as const, label: 'About', icon: Info },
 ];
@@ -51,7 +51,7 @@ export function SettingsPanel() {
 
         {/* Tab Content */}
         <div className="p-6 max-h-[60vh] overflow-y-auto">
-          {activeTab === 'proxy' && <ProxyTab />}
+          {/* {activeTab === 'proxy' && <ProxyTab />} */}
           {activeTab === 'advanced' && <AdvancedTab />}
           {activeTab === 'about' && <AboutTab />}
         </div>
