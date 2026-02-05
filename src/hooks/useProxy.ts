@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { useProxyStore, useSettingsStore } from '../store/proxyStore';
-import type { ConnectionStatus, ConnectionInfo, AdvancedSettings } from '../types/proxy';
+import type { ConnectionStatus, ConnectionInfo } from '../types/proxy';
 import { toast } from "sonner"
 
 /**

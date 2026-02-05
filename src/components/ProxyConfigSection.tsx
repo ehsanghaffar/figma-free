@@ -67,6 +67,7 @@ export function ProxyConfigSection() {
         toast("Proxy configured and enabled successfully!", {
           description: <>latency: {result.latencyMs}ms</>,
           icon: <CheckCircle className="size-4 text-green-600" />,
+          duration: 2000
         });
         try {
           await invoke("trigger_health_check");

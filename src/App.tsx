@@ -29,7 +29,7 @@ function App() {
 
       {/* Settings Overlay */}
       <SettingsPanel />
-      <Toaster position="top-center" />
+      <Toaster offset={{ bottom: '24px', right: "16px", left: "16px" }}  />
     </div>
   );
 }
