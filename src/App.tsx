@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
-import { TitleBar } from './components/TitleBar';
-import { SettingsPanel } from './components/SettingsPanel';
-import { HomeScreen } from './components/HomeScreen';
-import { useAppStore, useProxyStore } from './store/proxyStore';
+import { useEffect } from "react";
+import { TitleBar } from "./components/TitleBar";
+import { SettingsPanel } from "./components/SettingsPanel";
+import { HomeScreen } from "./components/HomeScreen";
+import { useAppStore, useProxyStore } from "./store/proxyStore";
+import { Toaster } from "sonner";
 
 function App() {
   // Load app info and proxy config on mount
@@ -14,7 +15,7 @@ function App() {
     loadAppInfo();
     loadAdvancedSettings();
     loadConfig().catch((err) => {
-      console.error('Failed to load config:', err);
+      console.error("Failed to load config:", err);
     });
   }, [loadAppInfo, loadConfig, loadAdvancedSettings]);
 
@@ -28,6 +29,7 @@ function App() {
 
       {/* Settings Overlay */}
       <SettingsPanel />
+      <Toaster position="top-center" />
     </div>
   );
 }

@@ -1,10 +1,10 @@
-import { Figma, Wifi } from "lucide-react";
-import { useConnectionStatus, useSettingsListener, useKeyboardShortcuts } from "../hooks/useProxy";
+import { Figma } from "lucide-react";
+import { useConnectionStatus, useSettingsListener, useKeyboardShortcuts, useAdvancedSettings } from "../hooks/useProxy";
 import { useProxyStore } from "../store/proxyStore";
 import { invoke } from "@tauri-apps/api/core";
 import { Button } from "./ui/button";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Card, CardContent } from "./ui/card";
 import { ConnectionStatusSection } from "./ConnectionStatusSection";
 import { ProxyConfigSection } from "./ProxyConfigSection";
 import { DNSConfigSection } from "./DNSConfigSection";
@@ -16,6 +16,13 @@ export function HomeScreen() {
 
   const { status } = useConnectionStatus();
   const config = useProxyStore((state) => state.config);
+  const { DNSStatus } = useAdvancedSettings();
+  console.log("Connection status:", DNSStatus);
+
+  // funtion to check if custom DNS is set and/or proxy is connected to enable the launch button
+  const isLaunchEnabled = () => {
+    return (config.enabled && status === "connected") || (DNSStatus && typeof DNSStatus === "string" && DNSStatus.length > 0);
+  };
 
   const launchFigma = async () => {
     try {
@@ -38,79 +45,60 @@ export function HomeScreen() {
             {/* Header - Compact */}
             <div className="mb-3">
               <div className="flex items-center gap-2 mb-1">
-                <img src="/figma-icon.svg" alt="Figma" className="w-4 h-4" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                <h1 className="text-lg font-bold">Figma Desktop</h1>
+                <img
+                  src="/figma-icon.svg"
+                  alt="Figma"
+                  className="size-3"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+                <h1 className="text-2xl font-bold">Figma Free</h1>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Quick access to proxy configuration and Figma launcher
-              </p>
+              <p className="text-xs text-muted-foreground">Quick access to proxy configuration and Figma launcher</p>
             </div>
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col gap-3 min-h-0">
               {/* Connection Status - Inline */}
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <ConnectionStatusSection />
               </div>
 
-              {/* Configuration Card */}
-              <Card className="flex-1 flex flex-col min-h-0">
-                <CardHeader className="py-3 px-6">
-                  <CardTitle className="text-sm font-semibold">Configuration</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1 overflow-auto py-0 px-6 pb-6">
-                  <Accordion type="single" collapsible defaultValue="proxy" className="w-full">
-                    {/* Proxy Configuration */}
-                    <AccordionItem value="proxy" className="border-b">
-                      <AccordionTrigger className="hover:no-underline py-3 px-0">
-                        <div className="flex items-center gap-2">
-                          <div className="p-1 bg-blue-100 dark:bg-blue-950 rounded text-blue-600 dark:text-blue-400">
-                            <Wifi className="w-3.5 h-3.5" />
-                          </div>
-                          <div className="text-left">
-                            <p className="text-sm font-medium">Proxy</p>
-                            <p className="text-xs text-muted-foreground">{config.enabled ? "Enabled" : "Disabled"}</p>
-                          </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-0 py-3 bg-transparent">
-                        <ProxyConfigSection />
-                      </AccordionContent>
-                    </AccordionItem>
+              {/* Configuration Card with Tabs */}
+              <Card className="flex-1 flex flex-col min-h-0 p-0 overflow-hidden">
+                <Tabs defaultValue="proxy">
+                  <TabsList className="grid w-full grid-cols-2 gap-2 content-center border-b rounded-b-none p-1">
+                    <TabsTrigger value="proxy">
+                      <span>Proxy</span>
+                      {config.enabled && <span className="text-xs font-medium text-green-600 dark:text-green-400">●</span>}
+                    </TabsTrigger>
+                    <TabsTrigger value="dns">
+                      <span>DNS</span>
+                    </TabsTrigger>
+                  </TabsList>
+                  <CardContent className="flex-1 flex flex-col min-h-0 p-0">
+                    <TabsContent value="proxy" className="flex-1 overflow-auto p-2 m-0">
+                      <ProxyConfigSection />
+                    </TabsContent>
 
-                    {/* DNS & Header Configuration */}
-                    <AccordionItem value="dns" className="border-b-0">
-                      <AccordionTrigger className="hover:no-underline py-3 px-0">
-                        <div className="flex items-center gap-2">
-                          <div className="p-1 bg-purple-100 dark:bg-purple-950 rounded text-purple-600 dark:text-purple-400">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5a4 4 0 100-8 4 4 0 000 8z" />
-                            </svg>
-                          </div>
-                          <div className="text-left">
-                            <p className="text-sm font-medium">DNS & Headers</p>
-                            <p className="text-xs text-muted-foreground">Advanced</p>
-                          </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-0 py-3 bg-transparent">
-                        <DNSConfigSection />
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </CardContent>
+                    <TabsContent value="dns" className="flex-1 overflow-auto p-2 m-0">
+                      <DNSConfigSection />
+                    </TabsContent>
+                  </CardContent>
+                </Tabs>
               </Card>
 
               {/* Quick Actions */}
-              <div className="flex-shrink-0 flex gap-2">
+              <div className="shrink-0 flex gap-2">
                 <Button
-                  size="sm"
+                  size="lg"
                   onClick={launchFigma}
-                  disabled={status !== "connected"}
                   title={status !== "connected" ? "Connect proxy successfully to enable" : "Open Figma"}
                   className="flex-1 gap-2"
+                  disabled={!isLaunchEnabled()}
                 >
-                  <Figma className="w-4 h-4" />
+                  <Figma className="size-5" />
                   Launch Figma
                 </Button>
               </div>

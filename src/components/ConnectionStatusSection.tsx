@@ -67,7 +67,7 @@ export function ConnectionStatusSection() {
       {/* Compact Status Bar */}
       <div className={`flex items-center justify-between p-3 rounded-lg border transition-all duration-200 ${config.bgColor} ${config.borderColor}`}>
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className={`${config.textColor} flex-shrink-0`}>
+          <div className={`${config.textColor} shrink-0`}>
             {config.icon}
           </div>
           <div className="flex items-center gap-2 flex-1 min-w-0">

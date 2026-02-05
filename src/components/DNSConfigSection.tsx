@@ -72,7 +72,7 @@ export function DNSConfigSection() {
         {/* DNS Servers */}
         <div>
           <Label htmlFor="dns-servers">DNS Servers</Label>
-          <p className="text-xs text-muted-foreground mb-2">
+          <p className="text-xs text-muted-foreground mb-1">
             Comma-separated list of DNS servers
           </p>
           <InputGroup>
@@ -91,8 +91,8 @@ export function DNSConfigSection() {
         </div>
 
         {/* Custom Headers */}
-        <div className="border-t pt-4">
-          <Label htmlFor="custom-headers">Custom Headers</Label>
+        <div className="border-t pt-2">
+          <Label htmlFor="custom-headers">Custom User-Agent</Label>
           <p className="text-xs text-muted-foreground mb-2">
             JSON format for custom HTTP headers
           </p>
@@ -100,14 +100,10 @@ export function DNSConfigSection() {
             id="custom-headers"
             value={localConfig.customHeaders}
             onChange={(e) => handleChange('customHeaders', e.target.value)}
-            placeholder={'{\n  "User-Agent": "Custom Agent"\n}'}
-            disabled={isDisabled}
-            rows={4}
+            placeholder='{"User-Agent": "Custom Agent"}'
+            disabled={true}
             className="font-mono text-sm"
           />
-          <p className="text-xs text-muted-foreground mt-1">
-            Modify request headers sent through the proxy
-          </p>
         </div>
 
         {/* Info Box */}
@@ -121,7 +117,7 @@ export function DNSConfigSection() {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-2 pt-2 border-t">
+      <div className="flex gap-2 border-t">
         <Button
           onClick={handleSave}
           disabled={isLoading}

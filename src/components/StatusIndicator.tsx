@@ -29,7 +29,7 @@ const statusConfig: Record<ConnectionStatus, { variant: 'default' | 'secondary' 
 
 const sizeConfig = {
   sm: {
-    dot: 'w-2 h-2',
+    dot: 'size-2',
     text: 'text-xs',
   },
   md: {

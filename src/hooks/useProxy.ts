@@ -1,7 +1,8 @@
 import { useEffect, useCallback } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { useProxyStore, useSettingsStore } from '../store/proxyStore';
-import type { ConnectionStatus, ConnectionInfo } from '../types/proxy';
+import type { ConnectionStatus, ConnectionInfo, AdvancedSettings } from '../types/proxy';
+import { toast } from "sonner"
 
 /**
  * Hook for managing proxy configuration and status
@@ -45,8 +46,14 @@ export function useProxy() {
     const result = await store.testConnection();
     if (result.success) {
       await store.saveConfig();
+      toast.success("Proxy configured successfully!")
     }
-    return result;
+    else {
+      toast.error("Proxy test failed!", {
+        description: result.error,
+      })
+      return result;
+    }
   }, [store]);
   
   return {
@@ -142,4 +149,31 @@ export function useSettingsListener() {
       unlisten.then((fn) => fn());
     };
   }, [settingsStore]);
+}
+
+type DNSStatus = string | boolean | null;
+/**
+ * Hook to manage advanced settings 
+ */
+export function useAdvancedSettings() {
+  const store = useProxyStore();
+  
+  useEffect(() => {
+    store.loadAdvancedSettings();
+  }, []);
+
+
+
+  let hasCustomDNS: DNSStatus = false;
+  if (store.advancedSettings.customDns) {
+    hasCustomDNS = store.advancedSettings.customDns.trim();
+  } else {
+    hasCustomDNS = false;
+  }
+  
+  
+  return {
+    advancedSettings: store.advancedSettings,
+    DNSStatus: hasCustomDNS,
+  };
 }
