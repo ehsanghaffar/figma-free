@@ -1,0 +1,137 @@
+import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useProxyStore } from '../store/proxyStore';
+import { Switch } from './ui/switch';
+import { Label } from './ui/label';
+import { InputGroup, InputGroupInput } from './ui/input-group';
+import { Button } from './ui/button';
+import { Textarea } from './ui/textarea';
+
+interface DNSConfig {
+  enabled: boolean;
+  dnsServers: string;
+  customHeaders: string;
+}
+
+export function DNSConfigSection() {
+  const { advancedSettings, setAdvancedSettings, saveAdvancedSettings, isLoading } = useProxyStore();
+  const [localConfig, setLocalConfig] = useState<DNSConfig>({
+    enabled: advancedSettings.customDns?.length ? true : false,
+    dnsServers: advancedSettings.customDns || '',
+    customHeaders: advancedSettings.customUserAgent || '',
+  });
+
+  useEffect(() => {
+    setLocalConfig({
+      enabled: advancedSettings.customDns?.length ? true : false,
+      dnsServers: advancedSettings.customDns || '',
+      customHeaders: advancedSettings.customUserAgent || '',
+    });
+  }, [advancedSettings]);
+
+  const handleChange = (field: keyof DNSConfig, value: string | boolean) => {
+    setLocalConfig((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
+    const updatedSettings = {
+      ...advancedSettings,
+      customDns: localConfig.enabled ? localConfig.dnsServers : null,
+      customUserAgent: localConfig.enabled ? localConfig.customHeaders : null,
+    };
+    setAdvancedSettings(updatedSettings);
+    await saveAdvancedSettings();
+  };
+
+  const isDisabled = !localConfig.enabled;
+
+  return (
+    <div className="space-y-6">
+      {/* Enable Toggle */}
+      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+        <div>
+          <h4 className="text-sm font-semibold">Enable DNS & Headers</h4>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Override system DNS and custom headers
+          </p>
+        </div>
+        <Switch
+          checked={localConfig.enabled}
+          onCheckedChange={(checked) => handleChange('enabled', checked)}
+        />
+      </div>
+
+      {/* Settings - Disabled when feature is off */}
+      <div
+        className={`space-y-4 p-4 rounded-lg border transition-all ${
+          isDisabled
+            ? 'bg-muted/50 border-muted opacity-60'
+            : 'bg-background border-border'
+        }`}
+      >
+        {/* DNS Servers */}
+        <div>
+          <Label htmlFor="dns-servers">DNS Servers</Label>
+          <p className="text-xs text-muted-foreground mb-2">
+            Comma-separated list of DNS servers
+          </p>
+          <InputGroup>
+            <InputGroupInput
+              id="dns-servers"
+              type="text"
+              value={localConfig.dnsServers}
+              onChange={(e) => handleChange('dnsServers', e.target.value)}
+              placeholder="1.1.1.1, 8.8.8.8"
+              disabled={isDisabled}
+            />
+          </InputGroup>
+          <p className="text-xs text-muted-foreground mt-1">
+            Examples: Cloudflare (1.1.1.1), Google (8.8.8.8), Quad9 (9.9.9.9)
+          </p>
+        </div>
+
+        {/* Custom Headers */}
+        <div className="border-t pt-4">
+          <Label htmlFor="custom-headers">Custom Headers</Label>
+          <p className="text-xs text-muted-foreground mb-2">
+            JSON format for custom HTTP headers
+          </p>
+          <Textarea
+            id="custom-headers"
+            value={localConfig.customHeaders}
+            onChange={(e) => handleChange('customHeaders', e.target.value)}
+            placeholder={'{\n  "User-Agent": "Custom Agent"\n}'}
+            disabled={isDisabled}
+            rows={4}
+            className="font-mono text-sm"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Modify request headers sent through the proxy
+          </p>
+        </div>
+
+        {/* Info Box */}
+        <div className="border-t pt-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded">
+          <p className="text-xs text-blue-800 dark:text-blue-300">
+            <span className="font-semibold">Note:</span> These settings enhance privacy and
+            bypass certain restrictions. Use responsibly and in accordance with
+            applicable laws.
+          </p>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-2 pt-2 border-t">
+        <Button
+          onClick={handleSave}
+          disabled={isLoading}
+          size="sm"
+          className="flex-1"
+        >
+          {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+          Save DNS & Headers
+        </Button>
+      </div>
+    </div>
+  );
+}

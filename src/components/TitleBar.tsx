@@ -30,7 +30,7 @@ export function TitleBar() {
   return (
     <div
       data-tauri-drag-region
-      className="h-10 bg-neutral-900 flex items-center justify-between px-2 select-none border-b border-neutral-800"
+      className="h-10 flex items-center justify-between px-2 select-none "
     >
       {/* Left section - App title and status */}
       <div className="flex items-center gap-3" data-tauri-drag-region>
