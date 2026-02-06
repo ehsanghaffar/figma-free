@@ -55,32 +55,35 @@ impl ProxyManager {
 
     /// Configure the proxy with the given settings
     pub async fn configure(&self, config: ProxyConfig) -> Result<(), ProxyError> {
-        // Validate configuration
         if config.enabled {
+            // Validate configuration
             config.validate().map_err(ProxyError::ConfigError)?;
+
+            // Build the proxy URL
+            let proxy_url = config.to_url();
+
+            // Create proxy based on type
+            let proxy = match config.proxy_type {
+                ProxyType::Socks5 => Proxy::all(&proxy_url),
+                ProxyType::Http | ProxyType::Https => Proxy::all(&proxy_url),
+            }
+            .map_err(|e| ProxyError::InvalidUrl(e.to_string()))?;
+
+            // Build new client with proxy
+            let client = Client::builder()
+                .proxy(proxy)
+                .timeout(Duration::from_secs(30))
+                .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                .danger_accept_invalid_certs(false)
+                .build()
+                .map_err(|e| ProxyError::ConnectionError(e.to_string()))?;
+
+            // Update state
+            *self.client.write().await = Some(client);
+        } else {
+            *self.client.write().await = None;
         }
 
-        // Build the proxy URL
-        let proxy_url = config.to_url();
-
-        // Create proxy based on type
-        let proxy = match config.proxy_type {
-            ProxyType::Socks5 => Proxy::all(&proxy_url),
-            ProxyType::Http | ProxyType::Https => Proxy::all(&proxy_url),
-        }
-        .map_err(|e| ProxyError::InvalidUrl(e.to_string()))?;
-
-        // Build new client with proxy
-        let client = Client::builder()
-            .proxy(proxy)
-            .timeout(Duration::from_secs(30))
-            .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-            .danger_accept_invalid_certs(false)
-            .build()
-            .map_err(|e| ProxyError::ConnectionError(e.to_string()))?;
-
-        // Update state
-        *self.client.write().await = Some(client);
         *self.config.write().await = config.clone();
 
         // Update status
@@ -90,6 +93,11 @@ impl ProxyManager {
             ..config
         });
         status.last_updated = chrono::Utc::now().to_rfc3339();
+        if !status.config.as_ref().map(|c| c.enabled).unwrap_or(false) {
+            status.is_connected = false;
+            status.latency_ms = None;
+            status.last_error = None;
+        }
 
         Ok(())
     }

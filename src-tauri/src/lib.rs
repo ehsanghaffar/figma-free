@@ -8,6 +8,7 @@ use tauri::{
     Emitter, Manager,
 };
 use tokio::sync::RwLock;
+use tauri_plugin_store::StoreBuilder;
 
 pub mod commands;
 pub mod network;
@@ -16,10 +17,10 @@ pub mod utils;
 
 use network::InterceptorConfig;
 use proxy::{
-    create_health_monitor, create_proxy_manager, HealthCheckConfig, SharedHealthMonitor,
+    create_health_monitor, create_proxy_manager, HealthCheckConfig, ProxyConfig, SharedHealthMonitor,
     SharedProxyManager,
 };
-use utils::{get_proxy_password, AdvancedSettings};
+use utils::{get_proxy_password, keys, AdvancedSettings, STORE_FILENAME};
 
 /// Global application state
 pub struct AppState {
@@ -71,6 +72,33 @@ pub fn run() {
         .manage(AppState::new())
         .setup(|app| {
             let handle = app.handle().clone();
+
+            if let Ok(store) = StoreBuilder::new(&handle, STORE_FILENAME).build() {
+                if let Some(value) = store.get(keys::ADVANCED_SETTINGS) {
+                    if let Ok(settings) = serde_json::from_value::<AdvancedSettings>(value) {
+                        let state = app.state::<AppState>();
+                        tauri::async_runtime::block_on(async {
+                            *state.advanced_settings.write().await = settings;
+                        });
+                    }
+                }
+
+                if let Some(value) = store.get(keys::PROXY_CONFIG) {
+                    if let Ok(mut config) = serde_json::from_value::<ProxyConfig>(value) {
+                        if config.username.is_some() && config.password.is_none() {
+                            config.password = get_proxy_password(&config.host, config.port).ok();
+                        }
+                        let state = app.state::<AppState>();
+                        tauri::async_runtime::block_on(async {
+                            if let Err(err) = state.proxy_manager.configure(config).await {
+                                log::warn!("Failed to apply stored proxy config: {}", err);
+                            }
+                        });
+                    }
+                }
+            } else {
+                log::warn!("Failed to open settings store");
+            }
 
             // Create system tray
             let tray = setup_system_tray(&handle)?;
@@ -176,6 +204,17 @@ fn setup_system_tray(handle: &tauri::AppHandle) -> Result<TrayIcon, Box<dyn std:
                                 let _ = state.proxy_manager.configure(config).await;
                             } else {
                                 let _ = state.proxy_manager.toggle(false).await;
+                            }
+
+                            let mut config = state.proxy_manager.get_config().await;
+                            config.password = None;
+                            if let Ok(store) =
+                                StoreBuilder::new(&app_clone, STORE_FILENAME).build()
+                            {
+                                if let Ok(value) = serde_json::to_value(config) {
+                                    store.set(keys::PROXY_CONFIG, value);
+                                    let _ = store.save();
+                                }
                             }
 
                             // Emit event to frontend

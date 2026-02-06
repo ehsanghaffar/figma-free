@@ -13,6 +13,9 @@ pub mod keys {
     pub const FIRST_RUN: &str = "first_run";
 }
 
+/// Store filename (saved under the app data directory by tauri-plugin-store)
+pub const STORE_FILENAME: &str = "settings.json";
+
 /// Advanced settings structure
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]

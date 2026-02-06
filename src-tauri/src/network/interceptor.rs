@@ -121,6 +121,10 @@ pub const INTERCEPTOR_SCRIPT: &str = r#"
 pub const WEBRTC_PROTECTION_SCRIPT: &str = r#"
 (function() {
     'use strict';
+
+    if (!window.location || !window.location.hostname || !window.location.hostname.endsWith('figma.com')) {
+        return;
+    }
     
     // Disable WebRTC completely
     const noop = function() {};

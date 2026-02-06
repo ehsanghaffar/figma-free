@@ -185,7 +185,7 @@ export const useProxyStore = create<ProxyStore>()(
       name: 'figma-proxy-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state: ProxyStore) => ({
-        config: state.config,
+        config: { ...state.config, password: undefined },
         advancedSettings: state.advancedSettings,
       }),
     }
