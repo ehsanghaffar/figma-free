@@ -1,4 +1,4 @@
-import { ExternalLink, Figma, Github, Heart } from "lucide-react";
+import { ExternalLink, Github, Heart } from "lucide-react";
 import { useAppStore } from "../../store/proxyStore";
 import { Button } from "../ui/button";
 
