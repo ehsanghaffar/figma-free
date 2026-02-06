@@ -1,5 +1,5 @@
 [package]
-name = "figma-wpr"
+name = "figma-free"
 version = "0.1.0"
 description = "A Figma Desktop Wrapper with Proxy Support"
 authors = ["ein"]

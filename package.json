@@ -1,8 +1,15 @@
 {
-  "name": "figma-wpr",
+  "name": "Figma Free",
+  "description": "A application that allows users to configure a proxy and then launch Figma with that proxy, which is useful for regions with network restrictions.",
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "author": {
+    "name": "Ehsan Ghaffar (Ein)"
+  },
+  "repository": {
+    "url": "https://github.com/ehsanghaffar/figma-free"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

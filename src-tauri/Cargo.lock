@@ -1073,7 +1073,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "figma-wpr"
+name = "figma-free"
 version = "0.1.0"
 dependencies = [
  "anyhow",
