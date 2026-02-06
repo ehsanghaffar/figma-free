@@ -20,8 +20,6 @@ pub struct HealthCheckConfig {
     pub failure_threshold: u32,
     /// URL to use for health checks
     pub check_url: String,
-    /// Optional token to include in the `X-Figma-Token` header for health checks
-    pub figma_token: Option<String>,
 }
 
 impl Default for HealthCheckConfig {
@@ -30,9 +28,7 @@ impl Default for HealthCheckConfig {
             interval_secs: 30,
             timeout_secs: 10,
             failure_threshold: 3,
-            check_url: "https://www.api.figma.com/v1/me".to_string(),
-            // default token (can be overridden by passing a config)
-            figma_token: Some("figd_IdyLvLfEItlyfcoNibAFuB5hOYyv106KvAuxlcXK".to_string()),
+            check_url: "https://www.google.com".to_string(),
         }
     }
 }
@@ -95,15 +91,7 @@ impl HealthMonitor {
                 ProxyTestResult::failure(e)
             } else {
                 let start = Instant::now();
-
-                // Prefer sending the X-Figma-Token header when configured, otherwise do a plain request
-                let response_result = if let Some(token) = &self.config.figma_token {
-                    proxy_manager
-                        .request_with_header(&self.config.check_url, "X-Figma-Token", token)
-                        .await
-                } else {
-                    proxy_manager.request(&self.config.check_url).await
-                };
+                let response_result = proxy_manager.request(&self.config.check_url).await;
 
                 match response_result {
                     Ok(response) => {

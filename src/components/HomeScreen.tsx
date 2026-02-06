@@ -8,7 +8,6 @@ import { Card, CardContent } from "./ui/card";
 import { ConnectionStatusSection } from "./ConnectionStatusSection";
 import { ProxyConfigSection } from "./ProxyConfigSection";
 import { DNSConfigSection } from "./DNSConfigSection";
-import { toast } from "sonner";
 import { message } from '@tauri-apps/plugin-dialog';
 
 
@@ -35,8 +34,8 @@ export function HomeScreen() {
       const proxy = `${scheme}://${host}:${port}`;
       await invoke("create_figma_window", { proxy });
     } catch (err) {
-      toast.error("Failed to launch Figma", {
-        description: String(err),
+      message("Failed to launch Figma", {
+        kind: "error",
       });
     }
   };
@@ -51,9 +50,9 @@ export function HomeScreen() {
             <div className="mb-3">
               <div className="flex items-center gap-2 mb-1">
                 <img
-                  src="/figma-icon.svg"
+                  src="/figma.png"
                   alt="Figma"
-                  className="size-3"
+                  className="size-7"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                   }}

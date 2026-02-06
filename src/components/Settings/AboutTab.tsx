@@ -1,6 +1,6 @@
-import { ExternalLink, Github, Heart } from 'lucide-react';
-import { useAppStore } from '../../store/proxyStore';
-import { Button } from '../ui/button';
+import { ExternalLink, Figma, Github, Heart } from "lucide-react";
+import { useAppStore } from "../../store/proxyStore";
+import { Button } from "../ui/button";
 
 export function AboutTab() {
   const { appVersion } = useAppStore();
@@ -8,22 +8,18 @@ export function AboutTab() {
   return (
     <div className="space-y-6">
       {/* App Info */}
-      <div className="text-center py-6">
-        <div className="w-16 h-16 mx-auto mb-4 bg-linear-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
-          <span className="text-2xl font-bold text-white">F</span>
-        </div>
-        <h2 className="text-xl font-semibold text-neutral-200">Figma Desktop</h2>
+      <div className="text-center py-2">
+        <img src="/figma.png" alt="Figma Logo" className="size-12 mx-auto mb-2" />
+        <h2 className="text-xl font-semibold ">Figma Free</h2>
         <p className="text-sm text-neutral-500">Version {appVersion}</p>
       </div>
 
       {/* Description */}
-      <div className="bg-neutral-800/50 rounded-lg p-4">
-        <p className="text-sm text-neutral-400 leading-relaxed">
-          A desktop wrapper for Figma with built-in proxy support, enabling access
-          in regions with network restrictions. This is an unofficial application
-          not affiliated with Figma, Inc.
-        </p>
-      </div>
+      <p className="text-sm text-neutral-400 leading-relaxed">
+        Figma Free is an open-source desktop application that provides secure and private access to Figma by routing traffic
+        through a local proxy. It is designed to enhance your Figma experience while ensuring your data remains safe and your
+        connection is optimized.
+      </p>
 
       {/* Features */}
       <div>
@@ -54,16 +50,8 @@ export function AboutTab() {
 
       {/* Links */}
       <div className="space-y-2">
-        <Button
-          variant="outline"
-          className="w-full flex items-center justify-between"
-          asChild
-        >
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+        <Button variant="outline" className="w-full flex items-center justify-between" asChild>
+          <a href="https://github.com/ehsanghaffar" target="_blank" rel="noopener noreferrer">
             <div className="flex items-center gap-3">
               <Github className="w-5 h-5" />
               <span>View on GitHub</span>
@@ -72,16 +60,8 @@ export function AboutTab() {
           </a>
         </Button>
 
-        <Button
-          variant="outline"
-          className="w-full flex items-center justify-between"
-          asChild
-        >
-          <a
-            href="https://www.figma.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+        <Button variant="outline" className="w-full flex items-center justify-between" asChild>
+          <a href="https://www.figma.com" target="_blank" rel="noopener noreferrer">
             <div className="flex items-center gap-3">
               <span className="text-lg">F</span>
               <span>Visit Figma</span>
@@ -94,9 +74,8 @@ export function AboutTab() {
       {/* Legal */}
       <div className="pt-4 border-t border-neutral-800">
         <p className="text-xs text-neutral-600 text-center leading-relaxed">
-          This application is provided as-is without warranty. Use at your own risk.
-          Figma is a trademark of Figma, Inc. This project is not affiliated with
-          or endorsed by Figma, Inc.
+          This application is provided as-is without warranty. Use at your own risk. Figma is a trademark of Figma, Inc. This
+          project is not affiliated with or endorsed by Figma, Inc.
         </p>
       </div>
 

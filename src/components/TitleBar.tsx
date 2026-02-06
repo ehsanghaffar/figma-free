@@ -1,4 +1,4 @@
-import { Minus, Square, X, Settings } from 'lucide-react';
+import { Minus, Square, X, Info } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useSettingsStore } from '../store/proxyStore';
 import { StatusIndicator } from './StatusIndicator';
@@ -35,7 +35,7 @@ export function TitleBar() {
       {/* Left section - App title and status */}
       <div className="flex items-center gap-3" data-tauri-drag-region>
         <div className="flex items-center gap-2">
-          <img src="/figma-icon.svg" alt="Figma" className="size-4" onError={(e) => {
+          <img src="/figma.png" alt="Figma" className="size-4" onError={(e) => {
             e.currentTarget.style.display = 'none';
           }} />
           <span className="text-sm font-medium text-neutral-300">FigmaFree App</span>
@@ -50,9 +50,9 @@ export function TitleBar() {
           size="sm"
           onClick={() => settingsStore.open()}
           title="Settings (Cmd+,)"
-          className="h-8 w-8 p-0"
+          className="size-8 p-0"
         >
-          <Settings className="w-4 h-4" />
+          <Info className="size-4" />
         </Button>
         
         <div className="w-px h-4 bg-neutral-700 mx-1" />
@@ -62,9 +62,9 @@ export function TitleBar() {
           size="sm"
           onClick={handleMinimize}
           title="Minimize"
-          className="h-8 w-8 p-0"
+          className="size-8 p-0"
         >
-          <Minus className="w-4 h-4" />
+          <Minus className="size-4" />
         </Button>
         
         <Button
@@ -72,7 +72,7 @@ export function TitleBar() {
           size="sm"
           onClick={handleMaximize}
           title="Maximize"
-          className="h-8 w-8 p-0"
+          className="size-8 p-0"
         >
           <Square className="w-3.5 h-3.5" />
         </Button>
@@ -82,9 +82,9 @@ export function TitleBar() {
           size="sm"
           onClick={handleClose}
           title="Close to Tray"
-          className="h-8 w-8 p-0 hover:bg-red-600 hover:text-white"
+          className="size-8 p-0 hover:bg-red-600 hover:text-white"
         >
-          <X className="w-4 h-4" />
+          <X className="size-4" />
         </Button>
       </div>
     </div>

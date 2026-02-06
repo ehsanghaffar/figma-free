@@ -3,7 +3,7 @@ import { TitleBar } from "./components/TitleBar";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { HomeScreen } from "./components/HomeScreen";
 import { useAppStore, useProxyStore } from "./store/proxyStore";
-import { Toaster } from "sonner";
+import { message } from "@tauri-apps/plugin-dialog";
 
 function App() {
   // Load app info and proxy config on mount
@@ -16,6 +16,7 @@ function App() {
     loadAdvancedSettings();
     loadConfig().catch((err) => {
       console.error("Failed to load config:", err);
+      message("Failed to load proxy configuration. Please check your settings.", {kind: "error", title: "Error"});
     });
   }, [loadAppInfo, loadConfig, loadAdvancedSettings]);
 
@@ -23,7 +24,6 @@ function App() {
     <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
       {/* Custom Title Bar */}
       <TitleBar />
-      <Toaster position="top-center" />
 
       {/* Main Content */}
       <HomeScreen />

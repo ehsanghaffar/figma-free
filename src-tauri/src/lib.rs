@@ -60,7 +60,7 @@ pub fn run() {
     // Initialize logging
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-    log::info!("Starting Figma Desktop v{}", env!("CARGO_PKG_VERSION"));
+    log::info!("Starting Figma Free v{}", env!("CARGO_PKG_VERSION"));
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -151,7 +151,7 @@ fn setup_system_tray(handle: &tauri::AppHandle) -> Result<TrayIcon, Box<dyn std:
     // Create tray icon
     let tray = TrayIconBuilder::new()
         .menu(&menu)
-        .tooltip("Figma Desktop")
+        .tooltip("Figma Free")
         .on_menu_event(move |app, event| {
             match event.id().as_ref() {
                 "show" => {

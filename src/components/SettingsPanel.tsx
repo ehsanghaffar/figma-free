@@ -12,11 +12,11 @@ export function SettingsPanel() {
 
   return (
     <Dialog open={isOpen} onOpenChange={close}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>About Figma Desktop</DialogTitle>
+          <DialogTitle>About Figma Free</DialogTitle>
         </DialogHeader>
-        <div className="max-h-[60vh] overflow-y-auto">
+        <div className="overflow-y-auto">
           <AboutTab />
         </div>
       </DialogContent>

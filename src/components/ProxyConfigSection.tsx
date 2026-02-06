@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, Play, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, Play } from "lucide-react";
 import { useProxy } from "../hooks/useProxy";
 import type { ProxyType, ProxyConfig } from "../types/proxy";
 import { invoke } from "@tauri-apps/api/core";
@@ -74,10 +74,10 @@ export function ProxyConfigSection() {
           }
           await refreshStatus();
         } else {
-          message("Proxy test failed!", {title: "Error"});
+          message("Proxy test failed!", {title: "Error", kind: "error"});
         }
       } catch (err) {
-        message(`Failed to apply configuration: ${String(err)}`, {title: "Error"});
+        message(`Failed to apply configuration: ${String(err)}`, {title: "Error", kind: "error"});
       }
       return;
     }
@@ -87,7 +87,7 @@ export function ProxyConfigSection() {
       await toggleProxy(false);
       await refreshStatus();
     } catch (err) {
-      message(`Failed to save configuration: ${String(err)}`, {title: "Error"});
+      message(`Failed to save configuration: ${String(err)}`, {title: "Error", kind: "error"});
     }
   };
 

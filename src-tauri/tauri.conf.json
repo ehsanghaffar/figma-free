@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Figma Desktop",
+  "productName": "Figma Free",
   "version": "0.1.0",
   "identifier": "com.figma-wrapper.desktop",
   "build": {
@@ -14,9 +14,11 @@
     "windows": [
       {
         "label": "main",
-        "title": "Figma Desktop",
+        "title": "Figma Free",
         "width": 600,
         "height": 800,
+        "minHeight": 750,
+        "minWidth": 500,
         "decorations": true,
         "transparent": false,
         "resizable": true,
@@ -54,7 +56,7 @@
     "category": "Productivity",
     "shortDescription": "Figma Desktop with Proxy Support",
     "longDescription": "A desktop wrapper for Figma with built-in proxy and VPN support for regions with network restrictions.",
-    "copyright": "Copyright 2024",
+    "copyright": "Copyright 2026 Ehsan Ghaffar",
     "macOS": {
       "entitlements": null,
       "exceptionDomain": "",

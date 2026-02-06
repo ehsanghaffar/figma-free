@@ -6,7 +6,8 @@ import { Label } from './ui/label';
 import { InputGroup, InputGroupInput } from './ui/input-group';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { toast } from 'sonner';
+import { message } from '@tauri-apps/plugin-dialog';
+
 
 interface DNSConfig {
   enabled: boolean;
@@ -44,9 +45,7 @@ export function DNSConfigSection() {
 
   const handleSave = async () => {
     if (localConfig.enabled && !validateDNS(localConfig.dnsServers)) {
-      toast.error('Invalid DNS format', {
-        description: 'Please enter valid IPv4 addresses separated by commas',
-      });
+      message('Please enter valid comma-separated IPv4 addresses.', { kind: "error", title: "Invalid DNS Servers" });
       return;
     }
     
@@ -58,11 +57,9 @@ export function DNSConfigSection() {
     setAdvancedSettings(updatedSettings);
     try {
       await saveAdvancedSettings();
-      toast.success('DNS & Headers saved successfully');
+      message('Settings saved successfully!', { kind: "info", title: "Success" });
     } catch (err) {
-      toast.error('Failed to save settings', {
-        description: String(err),
-      });
+      message('Failed to save settings. Please try again.', { kind: "error", title: "Error" });
     }
   };
 
