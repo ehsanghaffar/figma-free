@@ -8,7 +8,40 @@ on:
       - main
 
 jobs:
+  create-release:
+    name: Create draft release
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tag_name: ${{ steps.meta.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node (for reading version)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Read version from tauri.conf.json
+        id: meta
+        run: |
+          VERSION=$(node -p "require('./src-tauri/tauri.conf.json').package.version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag_name=app-v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag_name }}
+          name: App v${{ steps.meta.outputs.version }}
+          body: See the assets to download this version and install.
+          draft: true
+          prerelease: false
+
   publish-macos-arm:
+    needs: create-release
     permissions:
       contents: write
     runs-on: macos-latest
@@ -37,18 +70,33 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install
 
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build (macOS arm64)
+        uses: tauri-apps/tauri-action@v0
         with:
-          tagName: app-v__VERSION__
-          releaseName: 'App v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
           args: '--target aarch64-apple-darwin'
 
+      - name: Rename macOS arm64 artifact(s)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          # Find the .dmg produced by Tauri
+          DMG_PATH=$(find src-tauri/target -type f -path '*/bundle/dmg/*.dmg' | head -n 1)
+          if [[ -z "${DMG_PATH:-}" ]]; then
+            echo "No DMG found under src-tauri/target" >&2
+            exit 1
+          fi
+          cp -f "$DMG_PATH" dist/figma-free-macos-arm64.dmg
+
+      - name: Upload renamed macOS arm64 asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.create-release.outputs.tag_name }}
+          files: |
+            dist/figma-free-macos-arm64.dmg
+
   publish-macos-intel:
+    needs: create-release
     permissions:
       contents: write
     runs-on: macos-latest
@@ -77,18 +125,32 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install
 
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build (macOS x64)
+        uses: tauri-apps/tauri-action@v0
         with:
-          tagName: app-v__VERSION__
-          releaseName: 'App v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
           args: '--target x86_64-apple-darwin'
 
+      - name: Rename macOS x64 artifact(s)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          DMG_PATH=$(find src-tauri/target -type f -path '*/bundle/dmg/*.dmg' | head -n 1)
+          if [[ -z "${DMG_PATH:-}" ]]; then
+            echo "No DMG found under src-tauri/target" >&2
+            exit 1
+          fi
+          cp -f "$DMG_PATH" dist/figma-free-macos-x64.dmg
+
+      - name: Upload renamed macOS x64 asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.create-release.outputs.tag_name }}
+          files: |
+            dist/figma-free-macos-x64.dmg
+
   publish-linux:
+    needs: create-release
     permissions:
       contents: write
     runs-on: ubuntu-22.04
@@ -120,12 +182,34 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install
 
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build (Linux x86_64)
+        uses: tauri-apps/tauri-action@v0
         with:
-          tagName: app-v__VERSION__
-          releaseName: 'App v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
+          args: ''
+
+      - name: Rename Linux artifact(s)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          # Prefer AppImage for friendly single-file distribution
+          APPIMAGE=$(find src-tauri/target -type f -path '*/bundle/appimage/*.AppImage' | head -n 1 || true)
+          if [[ -n "${APPIMAGE:-}" ]]; then
+            cp -f "$APPIMAGE" dist/figma-free-linux-x86_64.AppImage
+          else
+            # Fallback to .deb if AppImage not built
+            DEB=$(find src-tauri/target -type f -path '*/bundle/deb/*.deb' | head -n 1 || true)
+            if [[ -n "${DEB:-}" ]]; then
+              cp -f "$DEB" dist/figma-free-linux-amd64.deb
+            else
+              echo "No Linux artifacts (AppImage or deb) found" >&2
+              exit 1
+            fi
+          fi
+
+      - name: Upload renamed Linux asset(s)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.create-release.outputs.tag_name }}
+          files: |
+            dist/*
