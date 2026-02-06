@@ -157,7 +157,7 @@ Repository: https://github.com/ehsanghaffar/figma-free
 
 ## Tech Stack
 
-- Desktop: Tauri 2 (Rust) + WebView
+- Desktop: Tauri 2 (Rust) + WebView [Tauri](https://tauri.app/)
 - UI: React 19 + Vite 6 + Tailwind 4 + shadcn/radix primitives
 - State: Zustand
 - Networking: `reqwest` with proxy configuration and health checks
