@@ -27,7 +27,8 @@ jobs:
       - name: Read version from tauri.conf.json
         id: meta
         run: |
-          VERSION=$(node -p "require('./src-tauri/tauri.conf.json').package.version")
+          # VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version") # Old way
+          VERSION=__VERSION__
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag_name=app-v$VERSION" >> "$GITHUB_OUTPUT"
 
